@@ -1,20 +1,37 @@
 @import "tailwindcss";
 
+/* Tokens do projeto. Mude aqui e muda no site inteiro. */
 :root {
   --background: #ffffff;
-  --foreground: #ffffff;
+  --foreground: #171717;
+
+  --primary: #15803d;
+  --secondary: #475569;
+  --success: #047857;
+  --danger: #b91c1c;
+  --warning: #b45309;
+  --info: #1d4ed8;
 }
 
+/* Expõe os tokens como utilitários: bg-primary, text-danger, etc. */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: hwb(249 0% 0%);
+    --background: #0a0a0a;
     --foreground: #ededed;
   }
 }
@@ -22,5 +39,5 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
