@@ -1,0 +1,28 @@
+/* 1. Mídia e Fontes sempre em primeiro lugar */
+@import "./fonts.css";
+@import "tailwindcss";
+@import "./theme.css";
+
+/* 2. Variáveis de Tema (com contraste corrigido para texto escuro) */
+:root {
+  --background: #F0F9FF;
+  --foreground: #0D1B2A;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0D1B2A;
+    --foreground: #F0F9FF;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}

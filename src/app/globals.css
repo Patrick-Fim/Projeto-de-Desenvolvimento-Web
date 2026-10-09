@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import "../styles/theme.css";
+@import "../styles/fonts.css";
 
 /* Tokens do projeto. Mude aqui e muda no site inteiro. */
 :root {
