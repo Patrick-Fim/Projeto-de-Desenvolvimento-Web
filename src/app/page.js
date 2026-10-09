@@ -115,7 +115,7 @@ export default function Home() {
               <div className="norte-title">Vá além<br />do mapa<span>.</span></div>
               <div className="norte-landscape norte-landscape--back" />
               <div className="norte-landscape norte-landscape--front" />
-              <span className="norte-coordinates">22°54' S &nbsp; 43°10' W</span>
+              <span className="norte-coordinates">22°54&apos; S &nbsp; 43°10&apos; W</span>
             </div>
             <div className="project-meta">
               <div><h3>Norte</h3><p>Estratégia · Marca · Web</p></div>
