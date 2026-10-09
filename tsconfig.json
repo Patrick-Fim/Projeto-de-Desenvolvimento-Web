@@ -30,7 +30,7 @@
     "**/*.mts",
     "**/*.ts",
     "**/*.tsx"
-, "src/app/App.jsx"  ],
+  ],
   "exclude": [
     "node_modules"
   ]
