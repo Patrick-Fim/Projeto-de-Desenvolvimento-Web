@@ -27,23 +27,23 @@ const C = {
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const T = {
-  bg:       "#F0F9FF",
-  bgHero:   "#E0F2FE",
-  white:    "#FFFFFF",
-  primary:  "#0096C7",
+  bg: "#F0F9FF",
+  bgHero: "#E0F2FE",
+  white: "#FFFFFF",
+  primary: "#0096C7",
   primaryD: "#0077B6",
-  dark:     "#03045E",
-  darkMid:  "#0D1B2A",
-  green:    "#00AB39",
-  muted:    "#1A6694",
-  mutedBg:  "#E0F2FE",
-  border:   "rgba(0,150,199,0.15)",
+  dark: "#03045E",
+  darkMid: "#0D1B2A",
+  green: "#00AB39",
+  muted: "#1A6694",
+  mutedBg: "#E0F2FE",
+  border: "rgba(0,150,199,0.15)",
   // rings
-  earth:    "#2E7D32",
-  fire:     "#E63946",
-  wind:     "#00B4D8",
-  water:    "#0077B6",
-  heart:    "#D62828",
+  earth: "#2E7D32",
+  fire: "#E63946",
+  wind: "#00B4D8",
+  water: "#0077B6",
+  heart: "#D62828",
 };
 
 const H = '"Montserrat", system-ui, sans-serif';
@@ -51,11 +51,11 @@ const B = '"Inter", system-ui, sans-serif';
 
 // ─── Ring data ────────────────────────────────────────────────────────────────
 const RINGS = [
-  { id: "terra",   name: "Terra",    emoji: "🌿", color: T.earth, bg: "#E8F5E9", icon: Leaf,     mission: "Solo & Florestas",   powers: ["Reflorestamento", "Compostagem", "Biodiversidade"], desc: "Guardiões do solo, florestas e biodiversidade. Plantam, compostam e restauram ecossistemas terrestres devastados.", count: 18420 },
-  { id: "fogo",    name: "Fogo",     emoji: "🔥", color: T.fire,  bg: "#FFEBEE", icon: Flame,    mission: "Energia & Clima",    powers: ["Energia Solar", "Anti-queimadas", "Carbono Zero"],  desc: "Combatem queimadas ilegais e promovem a transição para energias limpas como solar e eólica.", count: 12840 },
-  { id: "vento",   name: "Vento",    emoji: "💨", color: T.wind,  bg: "#E1F5FE", icon: Wind,     mission: "Ar & Mobilidade",   powers: ["Ar Puro", "Bike Elétrica", "Emissões Zero"],       desc: "Defensores do ar limpo e da mobilidade sustentável. Cada pedalada é um voto pelo futuro.", count: 21550 },
-  { id: "agua",    name: "Água",     emoji: "💧", color: T.water, bg: "#E3F2FD", icon: Droplets, mission: "Oceanos & Rios",    powers: ["Praias Limpas", "Corais Vivos", "Água Potável"],    desc: "Guardiões dos mares, rios e aquíferos. Limpam praias, protegem corais e monitoram nascentes.", count: 16730 },
-  { id: "coracao", name: "Coração",  emoji: "❤️", color: T.heart, bg: "#FCE4EC", icon: Heart,    mission: "Comunidade & Amor", powers: ["Educação", "Mobilização", "Comunidades"],           desc: "O elo entre todos os anéis. Educam, mobilizam e garantem que nenhum protetor lute sozinho.", count: 31200 },
+  { id: "terra", name: "Terra", emoji: "🌿", color: T.earth, bg: "#E8F5E9", icon: Leaf, mission: "Solo & Florestas", powers: ["Reflorestamento", "Compostagem", "Biodiversidade"], desc: "Guardiões do solo, florestas e biodiversidade. Plantam, compostam e restauram ecossistemas terrestres devastados.", count: 18420 },
+  { id: "fogo", name: "Fogo", emoji: "🔥", color: T.fire, bg: "#FFEBEE", icon: Flame, mission: "Energia & Clima", powers: ["Energia Solar", "Anti-queimadas", "Carbono Zero"], desc: "Combatem queimadas ilegais e promovem a transição para energias limpas como solar e eólica.", count: 12840 },
+  { id: "vento", name: "Vento", emoji: "💨", color: T.wind, bg: "#E1F5FE", icon: Wind, mission: "Ar & Mobilidade", powers: ["Ar Puro", "Bike Elétrica", "Emissões Zero"], desc: "Defensores do ar limpo e da mobilidade sustentável. Cada pedalada é um voto pelo futuro.", count: 21550 },
+  { id: "agua", name: "Água", emoji: "💧", color: T.water, bg: "#E3F2FD", icon: Droplets, mission: "Oceanos & Rios", powers: ["Praias Limpas", "Corais Vivos", "Água Potável"], desc: "Guardiões dos mares, rios e aquíferos. Limpam praias, protegem corais e monitoram nascentes.", count: 16730 },
+  { id: "coracao", name: "Coração", emoji: "❤️", color: T.heart, bg: "#FCE4EC", icon: Heart, mission: "Comunidade & Amor", powers: ["Educação", "Mobilização", "Comunidades"], desc: "O elo entre todos os anéis. Educam, mobilizam e garantem que nenhum protetor lute sozinho.", count: 31200 },
 ];
 
 // ─── Animated counter ─────────────────────────────────────────────────────────
@@ -82,8 +82,8 @@ function Stat({ icon: Icon, value, unit, label, color, active }: {
   const display = n >= 1000000
     ? (n / 1000000).toFixed(1) + "M"
     : n >= 1000
-    ? (n / 1000).toFixed(1) + "K"
-    : n.toString();
+      ? (n / 1000).toFixed(1) + "K"
+      : n.toString();
 
   return (
     <div className="relative rounded-2xl p-8 overflow-hidden group text-center" style={{ background: T.white, border: `2px solid ${T.border}`, boxShadow: "0 4px 24px rgba(0,150,199,0.08)" }}>
@@ -141,21 +141,21 @@ function StyleGuide({ open, onClose }: { open: boolean; onClose: () => void }) {
           <section>
             <p className="text-[10px] font-bold uppercase tracking-widest mb-4" style={{ fontFamily: H, color: T.muted }}>Paleta de Cores</p>
             <div className="space-y-3">
-              {swatch(T.primary,  "Azul Capitão Planeta", "#0096C7 — Primary")}
-              {swatch(T.primaryD, "Azul Oceano Profundo",  "#0077B6 — Primary Dark")}
-              {swatch(T.dark,     "Azul Noite / Títulos",  "#03045E — Foreground")}
-              {swatch(T.green,    "Verde Ecológico",       "#00AB39 — Accent")}
-              {swatch(T.bg,       "Azul Celeste / Fundo",  "#F0F9FF — Background")}
-              {swatch(T.white,    "Branco / Cards",        "#FFFFFF — Card")}
+              {swatch(T.primary, "Azul Capitão Planeta", "#0096C7 — Primary")}
+              {swatch(T.primaryD, "Azul Oceano Profundo", "#0077B6 — Primary Dark")}
+              {swatch(T.dark, "Azul Noite / Títulos", "#03045E — Foreground")}
+              {swatch(T.green, "Verde Ecológico", "#00AB39 — Accent")}
+              {swatch(T.bg, "Azul Celeste / Fundo", "#F0F9FF — Background")}
+              {swatch(T.white, "Branco / Cards", "#FFFFFF — Card")}
             </div>
             <div className="mt-4 pt-4" style={{ borderTop: `1px solid ${T.border}` }}>
               <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ fontFamily: H, color: T.muted }}>Anéis Elementais</p>
               <div className="space-y-3">
-                {swatch(T.earth, "Terra — Verde Folha",      "#2E7D32")}
-                {swatch(T.fire,  "Fogo — Vermelho Flamejante","#E63946")}
-                {swatch(T.wind,  "Vento — Ciano Brilhante",  "#00B4D8")}
-                {swatch(T.water, "Água — Azul Oceano",       "#0077B6")}
-                {swatch(T.heart, "Coração — Terracota",      "#D62828")}
+                {swatch(T.earth, "Terra — Verde Folha", "#2E7D32")}
+                {swatch(T.fire, "Fogo — Vermelho Flamejante", "#E63946")}
+                {swatch(T.wind, "Vento — Ciano Brilhante", "#00B4D8")}
+                {swatch(T.water, "Água — Azul Oceano", "#0077B6")}
+                {swatch(T.heart, "Coração — Terracota", "#D62828")}
               </div>
             </div>
           </section>
@@ -229,7 +229,7 @@ function StyleGuide({ open, onClose }: { open: boolean; onClose: () => void }) {
           <section>
             <p className="text-[10px] font-bold uppercase tracking-widest mb-4" style={{ fontFamily: H, color: T.muted }}>Espaçamento</p>
             <div className="space-y-2">
-              {[[4,"XS"],[8,"SM"],[16,"MD"],[24,"LG"],[40,"XL"],[64,"2XL"]].map(([px, label]) => (
+              {[[4, "XS"], [8, "SM"], [16, "MD"], [24, "LG"], [40, "XL"], [64, "2XL"]].map(([px, label]) => (
                 <div key={label} className="flex items-center gap-3">
                   <span className="w-6 text-[10px] text-right" style={{ fontFamily: B, color: T.muted }}>{label}</span>
                   <div className="h-2.5 rounded-sm" style={{ width: `${px}px`, background: `${T.primary}55` }} />
@@ -243,7 +243,7 @@ function StyleGuide({ open, onClose }: { open: boolean; onClose: () => void }) {
           <section>
             <p className="text-[10px] font-bold uppercase tracking-widest mb-4" style={{ fontFamily: H, color: T.muted }}>Raios de Borda</p>
             <div className="flex gap-3 flex-wrap">
-              {[["4px","XS"],["8px","SM"],["12px","MD"],["16px","LG"],["9999px","Full"]].map(([r, l]) => (
+              {[["4px", "XS"], ["8px", "SM"], ["12px", "MD"], ["16px", "LG"], ["9999px", "Full"]].map(([r, l]) => (
                 <div key={r} className="flex flex-col items-center gap-2">
                   <div className="w-10 h-10 border-2" style={{ borderRadius: r, borderColor: T.primary, background: `${T.primary}10` }} />
                   <p className="text-[9px]" style={{ fontFamily: B, color: T.muted }}>{l}</p>
@@ -257,8 +257,8 @@ function StyleGuide({ open, onClose }: { open: boolean; onClose: () => void }) {
             <p className="text-[10px] font-bold uppercase tracking-widest mb-4" style={{ fontFamily: H, color: T.muted }}>Elevação / Sombras</p>
             <div className="space-y-3">
               {[
-                ["Nível 1 — Cards",   "0 2px 8px rgba(0,150,199,0.08)"],
-                ["Nível 2 — Modais",  "0 8px 32px rgba(0,150,199,0.15)"],
+                ["Nível 1 — Cards", "0 2px 8px rgba(0,150,199,0.08)"],
+                ["Nível 2 — Modais", "0 8px 32px rgba(0,150,199,0.15)"],
                 ["Nível 3 — Overlay", "0 20px 64px rgba(3,4,94,0.2)"],
               ].map(([label, shadow]) => (
                 <div key={label as string} className="p-3 rounded-xl" style={{ background: T.white, boxShadow: shadow as string }}>
@@ -304,8 +304,8 @@ function RingCard({
         boxShadow: selected
           ? `0 24px 48px ${ring.color}45`
           : hovered
-          ? `0 12px 32px ${ring.color}25`
-          : "0 4px 16px rgba(0,150,199,0.06)",
+            ? `0 12px 32px ${ring.color}25`
+            : "0 4px 16px rgba(0,150,199,0.06)",
       }}
     >
       {/* Ambient glow */}
@@ -378,16 +378,16 @@ function RingCard({
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 export default function App() {
-  const [navOpen,        setNavOpen]        = useState(false);
-  const [sgOpen,         setSgOpen]         = useState(false);
-  const [selectedRing,   setSelectedRing]   = useState<string | null>(null);
-  const [statsVisible,   setStatsVisible]   = useState(false);
-  const [formRing,       setFormRing]       = useState("");
-  const [formCommit,     setFormCommit]     = useState("");
-  const [formName,       setFormName]       = useState("");
-  const [formEmail,      setFormEmail]      = useState("");
-  const [submitted,      setSubmitted]      = useState(false);
-  const [heroRing,       setHeroRing]       = useState<string | null>(null);
+  const [navOpen, setNavOpen] = useState(false);
+  const [sgOpen, setSgOpen] = useState(false);
+  const [selectedRing, setSelectedRing] = useState<string | null>(null);
+  const [statsVisible, setStatsVisible] = useState(false);
+  const [formRing, setFormRing] = useState("");
+  const [formCommit, setFormCommit] = useState("");
+  const [formName, setFormName] = useState("");
+  const [formEmail, setFormEmail] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [heroRing, setHeroRing] = useState<string | null>(null);
   const statsRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -410,7 +410,7 @@ export default function App() {
 
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const focus = (id: string) => () => setFocusedField(id);
-  const blur  = ()            => setFocusedField(null);
+  const blur = () => setFocusedField(null);
 
   return (
     <div style={{ fontFamily: B, background: T.bg, color: T.dark, overflowX: "hidden" }}>
@@ -434,7 +434,7 @@ export default function App() {
         aria-label="Guia de Estilo"
       >
         <Palette size={15} />
-        {["G","U","I","A"].map((c, i) => <span key={i}>{c}</span>)}
+        {["G", "U", "I", "A"].map((c, i) => <span key={i}>{c}</span>)}
       </button>
 
       <StyleGuide open={sgOpen} onClose={() => setSgOpen(false)} />
@@ -451,8 +451,12 @@ export default function App() {
           {/* Logo */}
           <a href="#" className="flex items-center gap-2.5 flex-shrink-0">
             <div className="relative w-9 h-9 flex-shrink-0">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${T.primary} 0%, ${T.primaryD} 100%)` }}>
-                <Globe size={18} color="white" />
+              <div className="relative w-9 h-9 flex-shrink-0">
+                <img
+                  src="/ProTer2.png"
+                  alt="Logo do Projeto"
+                  className="w-9 h-9 object-contain"
+                />
               </div>
               <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full flex items-center justify-center" style={{ background: T.green }}>
                 <Leaf size={8} color="white" />
@@ -466,7 +470,7 @@ export default function App() {
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-1">
-            {[["Causas","#causas"],["Anéis","#aneis"],["Sobre","#impacto"],["Projetos","#projetos"]].map(([label, href]) => (
+            {[["Causas", "#causas"], ["Anéis", "#aneis"], ["Sobre", "#impacto"], ["Projetos", "#projetos"]].map(([label, href]) => (
               <a key={label} href={href}
                 className="px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
                 style={{ fontFamily: H, color: T.muted }}
@@ -490,7 +494,7 @@ export default function App() {
 
         {navOpen && (
           <div className="md:hidden border-t px-5 py-4 space-y-1" style={{ background: T.white, borderColor: T.border }}>
-            {[["Causas","#causas"],["Anéis","#aneis"],["Sobre","#impacto"],["Projetos","#projetos"]].map(([label, href]) => (
+            {[["Causas", "#causas"], ["Anéis", "#aneis"], ["Sobre", "#impacto"], ["Projetos", "#projetos"]].map(([label, href]) => (
               <a key={label} href={href} onClick={() => setNavOpen(false)}
                 className="block px-4 py-3 rounded-xl text-sm font-semibold"
                 style={{ fontFamily: H, color: T.muted }}
@@ -620,8 +624,8 @@ export default function App() {
                 ))}
               </div>
               {heroRing && (
-                <p className="text-xs text-center font-semibold" style={{ color: RINGS.find(r=>r.id===heroRing)?.color, fontFamily: H }}>
-                  Anel de {RINGS.find(r=>r.id===heroRing)?.name} selecionado ✓
+                <p className="text-xs text-center font-semibold" style={{ color: RINGS.find(r => r.id === heroRing)?.color, fontFamily: H }}>
+                  Anel de {RINGS.find(r => r.id === heroRing)?.name} selecionado ✓
                 </p>
               )}
               <a href="#afiliacao"
@@ -707,10 +711,10 @@ export default function App() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-14">
-            <Stat icon={TreePine}  value={2400000} unit="" label="Árvores Plantadas"          color={T.earth}  active={statsVisible} />
-            <Stat icon={Recycle}   value={12800}   unit="T" label="Lixo Reciclado"            color={T.wind}   active={statsVisible} />
-            <Stat icon={Users}     value={100740}  unit="" label="Protetores Ativos"          color={T.primary} active={statsVisible} />
-            <Stat icon={Globe}     value={156}     unit="" label="Projetos no Mundo"          color={T.water}  active={statsVisible} />
+            <Stat icon={TreePine} value={2400000} unit="" label="Árvores Plantadas" color={T.earth} active={statsVisible} />
+            <Stat icon={Recycle} value={12800} unit="T" label="Lixo Reciclado" color={T.wind} active={statsVisible} />
+            <Stat icon={Users} value={100740} unit="" label="Protetores Ativos" color={T.primary} active={statsVisible} />
+            <Stat icon={Globe} value={156} unit="" label="Projetos no Mundo" color={T.water} active={statsVisible} />
           </div>
 
           {/* Progress section */}
@@ -761,10 +765,10 @@ export default function App() {
 
           {submitted ? (
             <div className="rounded-3xl p-14 text-center" style={{ background: `linear-gradient(135deg, ${T.primaryD} 0%, ${T.dark} 100%)`, border: `2px solid ${T.primary}40` }}>
-              <div className="text-6xl mb-6">{RINGS.find(r=>r.id===formRing)?.emoji || "🌍"}</div>
+              <div className="text-6xl mb-6">{RINGS.find(r => r.id === formRing)?.emoji || "🌍"}</div>
               <h3 className="text-3xl font-black mb-3" style={{ fontFamily: H, color: T.white }}>Bem-vindo, Protetor!</h3>
               <p className="text-lg mb-2" style={{ color: "rgba(255,255,255,0.8)" }}>
-                {formName || "Você"} é agora um Protetor{formRing ? ` do Anel de ${RINGS.find(r=>r.id===formRing)?.name}` : " da Terra"}!
+                {formName || "Você"} é agora um Protetor{formRing ? ` do Anel de ${RINGS.find(r => r.id === formRing)?.name}` : " da Terra"}!
               </p>
               <p className="text-sm" style={{ color: "rgba(255,255,255,0.55)" }}>Confirme sua inscrição no e-mail {formEmail || "cadastrado"}.</p>
               <div className="flex justify-center mt-6 gap-3">
@@ -867,7 +871,12 @@ export default function App() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-14">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold mb-4" style={{ background: `${T.primary}10`, color: T.primary, fontFamily: H }}>
-              <Globe size={12} /> Em Campo Agora
+              <img
+                src="/ProTer2.png"
+                alt="Logo"
+                className="w-3.5 h-3.5 object-contain"
+              />
+              Em Campo Agora
             </div>
             <h2 className="font-black mb-4" style={{ fontFamily: H, color: T.dark, fontSize: "clamp(2rem, 4vw, 2.8rem)" }}>
               Projetos em Andamento
@@ -935,8 +944,14 @@ export default function App() {
             <div>
               <div className="flex items-center gap-2.5 mb-4">
                 <div className="relative w-9 h-9">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${T.primary} 0%, ${T.primaryD} 100%)` }}>
-                    <Globe size={18} color="white" />
+                  <div className="relative w-9 h-9 flex-shrink-0">
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center overflow-hidden" style={{ background: `linear-gradient(135deg, ${T.primary} 0%, ${T.primaryD} 100%)` }}>
+                      <img
+                        src="/ProTer2.png"
+                        alt="Logo do Projeto"
+                        className="w-full h-full object-contain p-1"
+                      />
+                    </div>
                   </div>
                   <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full flex items-center justify-center" style={{ background: T.green }}>
                     <Leaf size={8} color="white" />
@@ -964,8 +979,8 @@ export default function App() {
             </div>
 
             {[
-              { title: "Movimento", links: ["Sobre Nós","Os 5 Anéis","Manifesto","Parceiros","Imprensa"] },
-              { title: "Projetos",  links: ["Sementes do Cerrado","Oceano Vivo","Sol Para Todos","Ar Puro","Ver Todos"] },
+              { title: "Movimento", links: ["Sobre Nós", "Os 5 Anéis", "Manifesto", "Parceiros", "Imprensa"] },
+              { title: "Projetos", links: ["Sementes do Cerrado", "Oceano Vivo", "Sol Para Todos", "Ar Puro", "Ver Todos"] },
             ].map((col) => (
               <div key={col.title}>
                 <p className="text-xs font-bold uppercase tracking-widest mb-4" style={{ fontFamily: H, color: T.primary }}>{col.title}</p>
@@ -987,8 +1002,8 @@ export default function App() {
               <div className="space-y-3">
                 {[
                   { Icon: MapPin, text: "São Paulo, SP · Brasil" },
-                  { Icon: Mail,   text: "contato@protetoresdaterra.org" },
-                  { Icon: Phone,  text: "+55 (11) 9 9876-5432" },
+                  { Icon: Mail, text: "contato@protetoresdaterra.org" },
+                  { Icon: Phone, text: "+55 (11) 9 9876-5432" },
                 ].map(({ Icon, text }) => (
                   <div key={text} className="flex items-start gap-2.5">
                     <Icon size={14} style={{ color: T.primary, flexShrink: 0, marginTop: 2 }} />
@@ -1004,7 +1019,7 @@ export default function App() {
               © 2025 Protetores da Terra. Todos os direitos reservados. Feito com 💙 pelo planeta.
             </p>
             <div className="flex gap-5">
-              {["Privacidade","Termos de Uso","Cookies"].map(l => (
+              {["Privacidade", "Termos de Uso", "Cookies"].map(l => (
                 <a key={l} href="#" className="text-xs transition-colors" style={{ color: "rgba(255,255,255,0.3)", fontFamily: B }}
                   onMouseEnter={e => (e.currentTarget.style.color = T.primary)}
                   onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}
