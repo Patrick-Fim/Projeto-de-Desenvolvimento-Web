@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import Button from '@/components/Button';
-import MissionCard from '@/components/MissionCard';
-import Modal from '@/components/Modal';
+import Button from '../../components/Button';
+import MissionCard from '../../components/MissionCard';
+import Modal from '../../components/Modal';
 
 // Dados mockados para testar os cards
 const mockMissions = [
