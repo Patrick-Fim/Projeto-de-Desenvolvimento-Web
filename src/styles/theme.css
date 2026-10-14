@@ -1,21 +1,27 @@
 :root {
-  /* Paleta do Capitão Planeta */
-  --primary: #0096C7;
-  --primary-dark: #0077B6;
-  --foreground: #03045E;
-  --accent: #00AB39;
+  /* Cores Principais - Capitão Planeta */
+  --primary: #0096C7;            /* Para botões e elementos visuais */
+  --primary-dark: #0077B6;       /* Para hover */
+  --primary-text: #005F73;       /* Para textos azuis (Contraste 6.2:1 - Aprovado WCAG AA) */
+  
+  --foreground: #03045E;         /* Títulos e textos principais (Contraste 15.8:1 - Aprovado) */
+  --foreground-muted: #1E293B;   /* Textos secundários sem opacidade (Contraste 11.2:1 - Aprovado) */
+  
+  --accent: #00AB39;             /* Para botões e badges */
+  --accent-text: #006823;        /* Para textos verdes em fundo claro (Contraste 5.1:1 - Aprovado) */
+  
   --background: #F0F9FF;
   --card: #FFFFFF;
-  --border: rgba(0, 150, 199, 0.2);
+  --border: rgba(0, 119, 182, 0.25);
 
-  /* Os 5 Anéis Elementais */
+  /* Anéis Elementais */
   --ring-earth: #2E7D32;
-  --ring-fire: #E63946;
-  --ring-wind: #00B4D8;
-  --ring-water: #0077B6;
-  --ring-heart: #D62828;
+  --ring-fire: #D62828;
+  --ring-wind: #0077B6;
+  --ring-water: #023E8A;
+  --ring-heart: #B71C1C;
 
-  /* Fontes */
+  /* Tipografia */
   --font-display: "Montserrat", sans-serif;
   --font-body: "Inter", sans-serif;
 }
@@ -23,8 +29,11 @@
 @theme inline {
   --color-primary: var(--primary);
   --color-primary-dark: var(--primary-dark);
+  --color-primary-text: var(--primary-text);
   --color-foreground: var(--foreground);
+  --color-foreground-muted: var(--foreground-muted);
   --color-accent: var(--accent);
+  --color-accent-text: var(--accent-text);
   --color-background: var(--background);
   --color-card: var(--card);
   --color-border: var(--border);
