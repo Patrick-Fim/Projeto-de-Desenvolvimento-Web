@@ -190,7 +190,7 @@ export default function MissoesPage() {
                 onClick={() => handleDeleteMission(selectedMission.id)}
                 className="text-xs text-ring-fire hover:underline font-bold"
               >
-                🗑️ Excluir Ocorrência (API DELETE)
+                Excluir Ocorrência
               </button>
 
               <div className="flex gap-2">
