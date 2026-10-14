@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 
 export default function Modal({ isOpen, onClose, title, children }) {
-  // Interação WCAG: Fechar ao pressionar a tecla ESC
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') onClose();
@@ -26,16 +25,14 @@ export default function Modal({ isOpen, onClose, title, children }) {
       aria-modal="true"
       aria-labelledby="modal-title"
     >
-      {/* Container do Modal */}
       <div
         className="bg-card w-full max-w-lg rounded-2xl p-6 shadow-2xl border border-border space-y-4 animate-scaleUp"
-        onClick={(e) => e.stopPropagation()} // Impede que o clique dentro feche o modal
+        onClick={(e) => e.stopPropagation()}
       >
-        {/* Cabeçalho */}
         <div className="flex items-center justify-between border-b border-border pb-3">
-          <h3 id="modal-title" className="text-xl font-bold text-foreground">
+          <h2 id="modal-title" className="text-xl font-bold text-foreground">
             {title}
-          </h3>
+          </h2>
           <button
             onClick={onClose}
             aria-label="Fechar modal"
@@ -45,7 +42,6 @@ export default function Modal({ isOpen, onClose, title, children }) {
           </button>
         </div>
 
-        {/* Conteúdo */}
         <div className="text-foreground/80 leading-relaxed">{children}</div>
       </div>
     </div>

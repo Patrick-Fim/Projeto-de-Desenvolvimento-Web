@@ -14,7 +14,7 @@ export default function Footer() {
         </div>
 
         <div>
-          <h3 className="font-bold text-white mb-3">Links Rápidos</h3>
+          <h2 className="font-bold text-white text-base mb-3">Links Rápidos</h2>
           <ul className="space-y-2 text-sm text-white/80">
             <li><Link href="/" className="hover:text-primary">Início</Link></li>
             <li><Link href="/missoes" className="hover:text-primary">Painel de Missões</Link></li>
@@ -23,7 +23,7 @@ export default function Footer() {
         </div>
 
         <div>
-          <h3 className="font-bold text-white mb-3">Projeto Acadêmico</h3>
+          <h2 className="font-bold text-white text-base mb-3">Projeto Acadêmico</h2>
           <p className="text-xs text-white/70">
             Desenvolvimento Web • Unidade 2<br />
             Conformidade WCAG AA & Next.js App Router
