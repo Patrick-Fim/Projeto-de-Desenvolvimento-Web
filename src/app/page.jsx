@@ -19,7 +19,7 @@ export default function HomePage() {
           </span>
           
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-foreground tracking-tight max-w-4xl mx-auto leading-tight">
-            O Poder é de Vocês! Junte-se aos Protetores da Terra.
+            O Poder é de Vocês! Faça parte dos Protetores da Terra.
           </h1>
 
           <p className="text-base md:text-lg text-foreground-muted max-w-2xl mx-auto leading-relaxed">
