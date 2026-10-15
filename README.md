@@ -2,7 +2,7 @@
 
 Este repositório contém o código-fonte da nossa aplicação. O objetivo deste documento é ajudar qualquer pessoa da equipa a configurar o ambiente e a executar o projeto localmente.
 
-
+ 
 # Pré-requisitos
 
 Antes de iniciar, confirma que tens os seguintes programas instalados no teu computador:
