@@ -5,6 +5,7 @@ import MissionCard from '../../components/MissionCard';
 import Modal from '../../components/Modal';
 import Button from '../../components/Button';
 
+// Opções disponíveis para filtrar as ocorrências pelo Anel Elemental.
 const RINGS = [
   { id: 'todos', label: 'Todos os Anéis', icon: '' },
   { id: 'terra', label: 'Terra', icon: '🌿' },
@@ -15,6 +16,7 @@ const RINGS = [
 ];
 
 export default function MissoesPage() {
+  // Estados da lista, da busca e dos feedbacks das operações.
   const [missoes, setMissoes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -30,6 +32,7 @@ export default function MissoesPage() {
   const carregarMissoes = async () => {
     try {
       setLoading(true);
+      // Consulta a API local para obter as missões cadastradas.
       const res = await fetch('/api/missoes');
       if (!res.ok) throw new Error('Falha ao carregar as missões');
       const data = await res.json();
@@ -47,6 +50,7 @@ export default function MissoesPage() {
 
   const handleDeleteMission = async (id) => {
     try {
+      // Exclui a ocorrência e atualiza a lista após a resposta da API.
       const res = await fetch(`/api/missoes?id=${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Erro ao excluir missão');
       
@@ -66,6 +70,7 @@ export default function MissoesPage() {
   };
 
   const missoesFiltradas = missoes.filter((m) => {
+    // A busca considera título e localidade; o anel é um filtro adicional.
     const matchesSearch = 
       m.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       m.location.toLowerCase().includes(searchTerm.toLowerCase());

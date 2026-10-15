@@ -1,4 +1,5 @@
 :root {
+  /* Tokens do tema claro, reutilizados pelas classes utilitárias da interface. */
   /* Cores Principais - Capitão Planeta (Modo Claro) */
   --primary: #0096C7;            /* Para botões e elementos visuais */
   --primary-dark: #0077B6;       /* Para hover */
@@ -51,6 +52,7 @@
 }
 
 @theme inline {
+  /* Expõe as variáveis CSS como cores e fontes para as classes do Tailwind. */
   --color-primary: var(--primary);
   --color-primary-dark: var(--primary-dark);
   --color-primary-text: var(--primary-text);

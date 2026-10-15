@@ -2,10 +2,12 @@ import { useEffect } from 'react';
 
 export default function Modal({ isOpen, onClose, title, children }) {
   useEffect(() => {
+    // Permite fechar o diálogo pelo teclado enquanto ele está aberto.
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') onClose();
     };
     if (isOpen) {
+      // Impede que a página ao fundo role enquanto o diálogo está ativo.
       document.body.style.overflow = 'hidden';
       window.addEventListener('keydown', handleKeyDown);
     }
@@ -18,6 +20,7 @@ export default function Modal({ isOpen, onClose, title, children }) {
   if (!isOpen) return null;
 
   return (
+    {/* Clique na camada externa fecha o modal; cliques no conteúdo são interceptados abaixo. */}
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn"
       onClick={onClose}

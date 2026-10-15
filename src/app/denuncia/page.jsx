@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Button from '../../components/Button';
 
 export default function DenunciaPage() {
+  // Valores controlados dos campos do formulário.
   const [formData, setFormData] = useState({
     reporterName: '',
     reporterEmail: '',
@@ -57,6 +58,7 @@ export default function DenunciaPage() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    // Atualiza a mensagem de erro enquanto o usuário corrige um campo já validado.
     if (errors[name]) {
       validateField(name, value);
     }
@@ -68,6 +70,7 @@ export default function DenunciaPage() {
   };
 
   const validateForm = () => {
+    // Verifica todos os campos antes de permitir o envio.
     const newErrors = {};
     Object.keys(formData).forEach((key) => {
       const err = validateField(key, formData[key]);
@@ -85,6 +88,7 @@ export default function DenunciaPage() {
 
     try {
       setSubmitting(true);
+      // Envia os dados validados para a API de missões.
       const res = await fetch('/api/missoes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

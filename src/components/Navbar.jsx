@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 
+// Destinos compartilhados pelas versões desktop e mobile da navegação.
 const NAV_LINKS = [
   { href: '/', label: 'Início' },
   { href: '/missoes', label: 'Painel de Missões' },
@@ -34,6 +35,7 @@ export default function Navbar() {
   }, []);
 
   const toggleTheme = () => {
+    // Mantém a classe visual e a preferência persistida em sincronia.
     if (isDark) {
       document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');

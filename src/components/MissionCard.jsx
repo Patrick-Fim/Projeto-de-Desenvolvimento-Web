@@ -11,6 +11,7 @@ const ringStyles = {
 
 export default function MissionCard({ mission, onSelectMission }) {
   const { title, description, ring = 'terra', location, status = 'Ativa', participants = 0 } = mission;
+  // Usa Terra como apresentação padrão caso o anel recebido não seja reconhecido.
   const currentRing = ringStyles[ring.toLowerCase()] || ringStyles.terra;
 
   return (

@@ -3,16 +3,19 @@
 import { useState, useEffect } from 'react';
 
 export default function ScrollToTop() {
+  // O botão só fica interativo depois que a página passa do limite definido.
   const [visivel, setVisivel] = useState(false);
 
   useEffect(() => {
     const aoRolar = () => setVisivel(window.scrollY > 300);
     aoRolar();
+    // Remove o ouvinte ao desmontar o componente para evitar manter uma inscrição ativa.
     window.addEventListener('scroll', aoRolar, { passive: true });
     return () => window.removeEventListener('scroll', aoRolar);
   }, []);
 
   const subir = () => {
+    // Retorna suavemente ao início da página.
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 

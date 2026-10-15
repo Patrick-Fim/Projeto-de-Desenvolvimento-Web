@@ -9,7 +9,7 @@ export default function Button({
   ariaLabel,
   ...props
 }) {
-  // Variantes de cor com suporte dinamico a Dark Mode
+  // Classes visuais centralizadas para manter consistentes as variantes do botão.
   const variants = {
     primary: 'bg-primary hover:bg-primary-dark text-white dark:text-slate-950 shadow-md focus:ring-primary',
     ecological: 'bg-accent hover:opacity-90 text-white shadow-md focus:ring-accent',
@@ -18,7 +18,7 @@ export default function Button({
     ghost: 'text-foreground hover:bg-primary/10 focus:ring-primary',
   };
 
-  // Tamanhos
+  // Espaçamento e tipografia disponíveis para cada tamanho.
   const sizes = {
     sm: 'px-3 py-1.5 text-sm rounded-lg',
     md: 'px-6 py-3 text-base rounded-xl',

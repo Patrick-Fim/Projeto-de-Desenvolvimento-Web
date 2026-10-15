@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import ScrollToTop from '../components/ScrollToTop';
 
+// Conteúdo dos cinco anéis: ícone, nome, classe de cor e descrição exibida no cartão.
 const elementRings = [
   { icon: '🌿', name: 'Terra', color: 'bg-ring-earth', desc: 'Preservação de matas, hortas comunitárias e reflorestamento urbano' },
   { icon: '🔥', name: 'Fogo', color: 'bg-ring-fire', desc: 'Prevenção, monitoramento e denúncia de queimadas ilegais' },
@@ -12,7 +13,7 @@ const elementRings = [
 export default function HomePage() {
   return (
     <main className="space-y-16 pb-12">
-      {/* Hero Banner */}
+      {/* Apresentação principal da plataforma e atalhos para as ações mais importantes. */}
       <section className="bg-gradient-to-b from-primary/10 via-background to-background py-16 md:py-24 border-b border-border">
         <div className="max-w-6xl mx-auto px-6 text-center space-y-6">
           <span className="inline-block text-xs font-bold uppercase tracking-wider text-accent-text bg-accent/15 border border-accent/30 px-4 py-1.5 rounded-full">
@@ -27,6 +28,7 @@ export default function HomePage() {
             Plataforma comunitária para catalogar missões ecológicas, denunciar crimes ambientais e mobilizar ações de preservação na sua região.
           </p>
 
+          {/* Ações principais: consultar missões ou registrar uma denúncia. */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
             <Link
               href="/missoes"
@@ -44,7 +46,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Seção dos 5 Anéis Elementais */}
+      {/* Apresenta os anéis a partir dos dados definidos em elementRings. */}
       <section className="max-w-6xl mx-auto px-6 space-y-8">
         <div className="text-center space-y-2">
           <h2 className="text-3xl font-extrabold text-foreground">Escolha seu Anel Mágico</h2>
@@ -52,6 +54,7 @@ export default function HomePage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+          {/* Cada item da lista gera um cartão com identidade visual e descrição próprias. */}
           {elementRings.map((ring) => (
             <div
               key={ring.name}
@@ -67,7 +70,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Seção de Métricas de Impacto */}
+      {/* Números de impacto apresentados em quatro indicadores. */}
       <section className="bg-card border-y border-border py-12">
         <div className="max-w-6xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           <div>
@@ -89,7 +92,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Voltar ao Topo */}
+      {/* Atalho para retornar ao início da página após a rolagem. */}
       <ScrollToTop />
     </main>
   );

@@ -37,16 +37,19 @@ const mockMissions = [
 ];
 
 export default function ComponentesPage() {
+  // Controla a missão exibida, o modal e a confirmação temporária na página de demonstração.
   const [selectedMission, setSelectedMission] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
   const handleOpenModal = (mission) => {
+    // Guarda a missão escolhida antes de abrir seus detalhes.
     setSelectedMission(mission);
     setIsModalOpen(true);
   };
 
   const handleConfirmEngagement = () => {
+    // Fecha os detalhes e mostra um aviso temporário de confirmação.
     setIsModalOpen(false);
     setToastMessage(`Você se engajou com sucesso na missão "${selectedMission?.title}"!`);
     setTimeout(() => setToastMessage(''), 4000);

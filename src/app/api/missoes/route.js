@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-// Simulação de banco de dados em memória
+// Dados de demonstração armazenados em memória; são reiniciados quando o servidor reinicia.
 let missoesMock = [
   {
     id: '1',
@@ -37,6 +37,7 @@ let missoesMock = [
 // 1. GET - Listar todas as missões/denúncias
 export async function GET() {
   try {
+    // Retorna a lista atual de missões e denúncias.
     return NextResponse.json(missoesMock, { status: 200 });
   } catch (error) {
     return NextResponse.json(
@@ -60,6 +61,7 @@ export async function POST(request) {
       );
     }
 
+    // Registra a denúncia como uma nova ocorrência em análise.
     const novaMissao = {
       id: String(Date.now()),
       title,
@@ -87,6 +89,7 @@ export async function POST(request) {
 // 3. DELETE - Remover uma denúncia/missão por ID
 export async function DELETE(request) {
   try {
+    // O identificador da ocorrência é recebido como parâmetro da URL.
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
