@@ -6,7 +6,7 @@ import Modal from '../../components/Modal';
 import Button from '../../components/Button';
 
 const RINGS = [
-  { id: 'todos', label: 'Todos os Anéis', icon: '✨' },
+  { id: 'todos', label: 'Todos os Anéis', icon: '' },
   { id: 'terra', label: 'Terra', icon: '🌿' },
   { id: 'fogo', label: 'Fogo', icon: '🔥' },
   { id: 'vento', label: 'Vento', icon: '💨' },
@@ -24,6 +24,7 @@ export default function MissoesPage() {
 
   const [selectedMission, setSelectedMission] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
   const carregarMissoes = async () => {
@@ -51,11 +52,17 @@ export default function MissoesPage() {
       
       setToastMessage('Denúncia/Missão removida com sucesso!');
       setIsModalOpen(false);
+      setConfirmingDelete(false);
       carregarMissoes();
       setTimeout(() => setToastMessage(''), 4000);
     } catch (err) {
       alert(err.message);
     }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setConfirmingDelete(false);
   };
 
   const missoesFiltradas = missoes.filter((m) => {
@@ -87,7 +94,7 @@ export default function MissoesPage() {
       {toastMessage && (
         <div className="bg-accent text-white p-4 rounded-xl shadow-md flex justify-between items-center animate-fadeIn">
           <span>🌿 {toastMessage}</span>
-          <button onClick={() => setToastMessage('')} className="font-bold ml-4">✕</button>
+          <button onClick={() => setToastMessage('')} className="font-bold ml-4 cursor-pointer">✕</button>
         </div>
       )}
 
@@ -118,7 +125,7 @@ export default function MissoesPage() {
             <button
               key={ring.id}
               onClick={() => setSelectedRing(ring.id)}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 selectedRing === ring.id
                   ? 'bg-primary-dark text-white shadow-xs'
                   : 'bg-background hover:bg-primary/10 text-foreground border border-border'
@@ -154,6 +161,7 @@ export default function MissoesPage() {
                 mission={mission}
                 onSelectMission={(m) => {
                   setSelectedMission(m);
+                  setConfirmingDelete(false);
                   setIsModalOpen(true);
                 }}
               />
@@ -171,7 +179,7 @@ export default function MissoesPage() {
       {/* Modal */}
       <Modal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={handleCloseModal}
         title={selectedMission ? selectedMission.title : 'Detalhes'}
       >
         {selectedMission && (
@@ -185,31 +193,56 @@ export default function MissoesPage() {
               <p>⚡ <strong>Status:</strong> {selectedMission.status}</p>
             </div>
 
-            <div className="flex justify-between items-center pt-4 border-t border-border">
-              <button
-                onClick={() => handleDeleteMission(selectedMission.id)}
-                className="text-xs text-ring-fire hover:underline font-bold"
-              >
-                Excluir Ocorrência
-              </button>
-
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => setIsModalOpen(false)}>
-                  Fechar
-                </Button>
-                <Button
-                  variant="ecological"
-                  size="sm"
-                  onClick={() => {
-                    setIsModalOpen(false);
-                    setToastMessage(`Você se voluntariou para: "${selectedMission.title}"!`);
-                    setTimeout(() => setToastMessage(''), 4000);
-                  }}
-                >
-                  Confirmar Engajamento
-                </Button>
+            {/* Confirmação de Exclusão (Passo 2) */}
+            {confirmingDelete ? (
+              <div className="bg-ring-fire/10 border border-ring-fire/30 p-4 rounded-xl space-y-3 animate-fadeIn">
+                <p className="text-xs font-bold text-ring-fire flex items-center gap-1.5">
+                  <span>Tem certeza que deseja excluir esta ocorrência permanentemente?</span>
+                </p>
+                <div className="flex justify-end gap-2 pt-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setConfirmingDelete(false)}
+                  >
+                    Voltar / Cancelar
+                  </Button>
+                  <button
+                    onClick={() => handleDeleteMission(selectedMission.id)}
+                    className="bg-ring-fire hover:opacity-90 text-white font-bold text-xs px-4 py-2 rounded-xl transition-all cursor-pointer shadow-xs"
+                  >
+                    Sim, Excluir Ocorrência
+                  </button>
+                </div>
               </div>
-            </div>
+            ) : (
+              /* Ações Padrão */
+              <div className="flex justify-between items-center pt-4 border-t border-border">
+                <button
+                  onClick={() => setConfirmingDelete(true)}
+                  className="text-xs text-ring-fire hover:underline font-bold cursor-pointer"
+                >
+                  Excluir Ocorrência
+                </button>
+
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={handleCloseModal}>
+                    Fechar
+                  </Button>
+                  <Button
+                    variant="ecological"
+                    size="sm"
+                    onClick={() => {
+                      handleCloseModal();
+                      setToastMessage(`Você se voluntariou para: "${selectedMission.title}"!`);
+                      setTimeout(() => setToastMessage(''), 4000);
+                    }}
+                  >
+                    Confirmar Engajamento
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </Modal>
