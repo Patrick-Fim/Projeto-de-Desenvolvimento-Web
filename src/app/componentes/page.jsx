@@ -56,14 +56,14 @@ export default function ComponentesPage() {
     <main className="min-h-screen p-6 md:p-12 space-y-12 max-w-6xl mx-auto">
       {/* Cabeçalho */}
       <header className="border-b border-primary/20 pb-6">
-        <span className="text-xs font-semibold tracking-wider uppercase text-accent bg-accent/10 px-3 py-1 rounded-full">
+        <span className="text-xs font-semibold tracking-wider uppercase text-accent-text bg-accent/15 border border-accent/30 px-3 py-1 rounded-full">
           ✓ Showcase de Componentes
         </span>
         <h1 className="text-4xl font-extrabold text-foreground mt-3">
           Componentes Reutilizáveis
         </h1>
-        <p className="text-foreground/70 mt-2 max-w-2xl">
-          Página de testes para validar o funcionamento do <code className="bg-primary/10 text-primary px-2 py-0.5 rounded">Button</code>, do <code className="bg-primary/10 text-primary px-2 py-0.5 rounded">MissionCard</code> e do <code className="bg-primary/10 text-primary px-2 py-0.5 rounded">Modal</code>.
+        <p className="text-foreground-muted mt-2 max-w-2xl">
+          Página de testes para validar o funcionamento do <code className="bg-primary/10 text-primary-text px-2 py-0.5 rounded font-mono">Button</code>, do <code className="bg-primary/10 text-primary-text px-2 py-0.5 rounded font-mono">MissionCard</code> e do <code className="bg-primary/10 text-primary-text px-2 py-0.5 rounded font-mono">Modal</code>.
         </p>
       </header>
 
@@ -77,9 +77,9 @@ export default function ComponentesPage() {
 
       {/* Teste 1: Componente Button */}
       <section className="space-y-4 bg-card p-6 rounded-2xl border border-border shadow-sm">
-        <h2 className="text-2xl font-bold">1. Componente Button (`src/components/Button.jsx`)</h2>
-        <p className="text-sm text-foreground/70">
-          Suporta as variantes <code className="text-primary font-mono">primary</code>, <code className="text-accent font-mono">ecological</code>, <code className="text-foreground font-mono">dark</code>, <code className="text-primary font-mono">outline</code> e <code className="font-mono">ghost</code>, além de tamanhos e acessibilidade por teclado.
+        <h2 className="text-2xl font-bold text-foreground">1. Componente Button (`src/components/Button.jsx`)</h2>
+        <p className="text-sm text-foreground-muted">
+          Suporta as variantes <code className="text-primary-text font-mono">primary</code>, <code className="text-accent-text font-mono">ecological</code>, <code className="text-foreground font-mono">dark</code>, <code className="text-primary-text font-mono">outline</code> e <code className="font-mono">ghost</code>, além de tamanhos e acessibilidade por teclado.
         </p>
 
         <div className="flex flex-wrap items-center gap-4 pt-2">
@@ -111,8 +111,8 @@ export default function ComponentesPage() {
 
       {/* Teste 2: Componente MissionCard */}
       <section className="space-y-4">
-        <h2 className="text-2xl font-bold">2. Componente MissionCard (`src/components/MissionCard.jsx`)</h2>
-        <p className="text-sm text-foreground/70">
+        <h2 className="text-2xl font-bold text-foreground">2. Componente MissionCard (`src/components/MissionCard.jsx`)</h2>
+        <p className="text-sm text-foreground-muted">
           Renderização dinâmica com os selos dos Anéis Elementais e botão de engajamento integrado.
         </p>
 
@@ -129,9 +129,9 @@ export default function ComponentesPage() {
 
       {/* Teste 3: Componente Modal */}
       <section className="space-y-4 bg-card p-6 rounded-2xl border border-border shadow-sm">
-        <h2 className="text-2xl font-bold">3. Componente Modal (`src/components/Modal.jsx`)</h2>
-        <p className="text-sm text-foreground/70">
-          Atende à exigência de interatividade. Suporta fechamento via tecla <kbd className="px-2 py-1 bg-background border border-border rounded text-xs">ESC</kbd> ou clique na camada de fundo.
+        <h2 className="text-2xl font-bold text-foreground">3. Componente Modal (`src/components/Modal.jsx`)</h2>
+        <p className="text-sm text-foreground-muted">
+          Atende à exigência de interatividade. Suporta fechamento via tecla <kbd className="px-2 py-1 bg-background border border-border rounded text-xs font-mono">ESC</kbd> ou clique na camada de fundo.
         </p>
 
         <Button variant="ecological" onClick={() => handleOpenModal(mockMissions[0])}>
@@ -147,9 +147,9 @@ export default function ComponentesPage() {
       >
         {selectedMission && (
           <div className="space-y-4">
-            <p className="text-foreground/80">{selectedMission.description}</p>
+            <p className="text-foreground-muted text-sm leading-relaxed">{selectedMission.description}</p>
 
-            <div className="bg-background p-4 rounded-xl border border-border space-y-2 text-sm">
+            <div className="bg-background p-4 rounded-xl border border-border space-y-2 text-xs font-medium text-foreground">
               <p>📍 <strong>Localização:</strong> {selectedMission.location}</p>
               <p>👥 <strong>Voluntários Inscritos:</strong> {selectedMission.participants} Protetores</p>
               <p>⚡ <strong>Status:</strong> {selectedMission.status}</p>

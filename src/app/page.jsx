@@ -30,13 +30,13 @@ export default function HomePage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
             <Link
               href="/missoes"
-              className="w-full sm:w-auto bg-primary-dark hover:bg-foreground text-white font-bold text-base px-8 py-3.5 rounded-xl shadow-md transition-all active:scale-95"
+              className="w-full sm:w-auto bg-primary hover:bg-primary-dark text-white dark:text-slate-950 font-bold text-base px-8 py-3.5 rounded-xl shadow-md transition-all active:scale-95 text-center"
             >
               Explorar Painel de Missões
             </Link>
             <Link
               href="/denuncia"
-              className="w-full sm:w-auto border-2 border-primary-text text-primary-text hover:bg-primary/10 font-bold text-base px-8 py-3.5 rounded-xl transition-all active:scale-95"
+              className="w-full sm:w-auto border-2 border-primary-text text-primary-text hover:bg-primary/10 font-bold text-base px-8 py-3.5 rounded-xl transition-all active:scale-95 text-center"
             >
               Registrar uma Denúncia
             </Link>
@@ -88,6 +88,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
       {/* Voltar ao Topo */}
       <ScrollToTop />
     </main>

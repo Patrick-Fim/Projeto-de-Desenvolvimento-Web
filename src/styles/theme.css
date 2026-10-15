@@ -1,14 +1,14 @@
 :root {
-  /* Cores Principais - Capitão Planeta */
+  /* Cores Principais - Capitão Planeta (Modo Claro) */
   --primary: #0096C7;            /* Para botões e elementos visuais */
   --primary-dark: #0077B6;       /* Para hover */
-  --primary-text: #005F73;       /* Para textos azuis (Contraste 6.2:1 - Aprovado WCAG AA) */
+  --primary-text: #005F73;       /* Para textos azuis (WCAG AA) */
   
-  --foreground: #03045E;         /* Títulos e textos principais (Contraste 15.8:1 - Aprovado) */
-  --foreground-muted: #1E293B;   /* Textos secundários sem opacidade (Contraste 11.2:1 - Aprovado) */
+  --foreground: #03045E;         /* Títulos e textos principais */
+  --foreground-muted: #1E293B;   /* Textos secundários */
   
-  --accent: #00AB39;             /* Para botões e badges */
-  --accent-text: #006823;        /* Para textos verdes em fundo claro (Contraste 5.1:1 - Aprovado) */
+  --accent: #00AB39;            /* Para botões e badges */
+  --accent-text: #006823;        /* Para textos verdes em fundo claro */
   
   --background: #F0F9FF;
   --card: #FFFFFF;
@@ -24,6 +24,30 @@
   /* Tipografia */
   --font-display: "Montserrat", sans-serif;
   --font-body: "Inter", sans-serif;
+}
+
+/* Modo Escuro (Dark Mode) com Alto Contraste */
+.dark {
+  --primary: #00B4D8;
+  --primary-dark: #90E0EF;
+  --primary-text: #90E0EF;
+  
+  --foreground: #F8FAFC;
+  --foreground-muted: #CBD5E1;
+  
+  --accent: #10B981;
+  --accent-text: #6EE7B7;
+  
+  --background: #0F172A;
+  --card: #1E293B;
+  --border: rgba(144, 224, 239, 0.25);
+
+  /* Anéis Elementais ajustados para o fundo escuro */
+  --ring-earth: #10B981;
+  --ring-fire: #EF4444;
+  --ring-wind: #38BDF8;
+  --ring-water: #60A5FA;
+  --ring-heart: #F87171;
 }
 
 @theme inline {

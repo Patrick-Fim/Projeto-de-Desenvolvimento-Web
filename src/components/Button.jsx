@@ -9,12 +9,12 @@ export default function Button({
   ariaLabel,
   ...props
 }) {
-  // Variantes de cor do Figma
+  // Variantes de cor com suporte dinamico a Dark Mode
   const variants = {
-    primary: 'bg-primary hover:bg-primary-dark text-white shadow-md focus:ring-primary',
+    primary: 'bg-primary hover:bg-primary-dark text-white dark:text-slate-950 shadow-md focus:ring-primary',
     ecological: 'bg-accent hover:opacity-90 text-white shadow-md focus:ring-accent',
-    dark: 'bg-foreground hover:bg-black text-white shadow-md focus:ring-foreground',
-    outline: 'border-2 border-primary text-primary hover:bg-primary/10 focus:ring-primary',
+    dark: 'bg-foreground hover:opacity-90 text-background shadow-md focus:ring-foreground',
+    outline: 'border-2 border-primary-text text-primary-text hover:bg-primary/10 focus:ring-primary',
     ghost: 'text-foreground hover:bg-primary/10 focus:ring-primary',
   };
 

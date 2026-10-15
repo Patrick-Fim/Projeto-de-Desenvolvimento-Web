@@ -43,7 +43,7 @@ export default function MissionCard({ mission, onSelectMission }) {
         <Button
           variant="primary"
           size="sm"
-          className="w-full bg-primary-dark hover:bg-foreground"
+          className="w-full"
           onClick={() => onSelectMission && onSelectMission(mission)}
           ariaLabel={`Engajar-se na missão ${title}`}
         >
