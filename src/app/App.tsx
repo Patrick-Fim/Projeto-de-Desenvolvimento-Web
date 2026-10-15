@@ -386,7 +386,10 @@ export default function App() {
   const [formCommit, setFormCommit] = useState("");
   const [formName, setFormName] = useState("");
   const [formEmail, setFormEmail] = useState("");
+  const [formCity, setFormCity] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+  const [erroEnvio, setErroEnvio] = useState("");
   const [heroRing, setHeroRing] = useState<string | null>(null);
   const statsRef = useRef<HTMLElement>(null);
 
@@ -411,6 +414,34 @@ export default function App() {
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const focus = (id: string) => () => setFocusedField(id);
   const blur = () => setFocusedField(null);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setErroEnvio("");
+    setEnviando(true);
+    try {
+      const res = await fetch("/api/voluntarios", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nome: formName,
+          email: formEmail,
+          cidade: formCity,
+          anel: formRing,
+          compromisso: formCommit,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.erro || "Falha ao enviar. Tente novamente.");
+      }
+      setSubmitted(true);
+    } catch (err: any) {
+      setErroEnvio(err.message || "Erro inesperado. Tente novamente.");
+    } finally {
+      setEnviando(false);
+    }
+  }
 
   return (
     <div style={{ fontFamily: B, background: T.bg, color: T.dark, overflowX: "hidden" }}>
@@ -781,7 +812,7 @@ export default function App() {
               </button>
             </div>
           ) : (
-            <form onSubmit={(e) => { e.preventDefault(); setSubmitted(true); }}
+            <form onSubmit={handleSubmit}
               className="rounded-3xl p-8 sm:p-10" style={{ background: T.white, boxShadow: `0 24px 64px rgba(0,0,0,0.3)` }}
             >
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
@@ -801,6 +832,16 @@ export default function App() {
                     onFocus={focus("femail")} onBlur={blur}
                   />
                 </div>
+              </div>
+
+              {/* Cidade */}
+              <div className="mb-5">
+                <label className="block text-sm font-bold mb-2" style={{ fontFamily: H, color: T.dark }}>Cidade *</label>
+                <input type="text" required placeholder="São Paulo"
+                  value={formCity} onChange={e => setFormCity(e.target.value)}
+                  style={fieldStyle(focusedField === "fcity")}
+                  onFocus={focus("fcity")} onBlur={blur}
+                />
               </div>
 
               {/* Ring */}
@@ -847,13 +888,19 @@ export default function App() {
                 </select>
               </div>
 
-              <button type="submit"
-                className="w-full py-5 rounded-2xl text-base font-black flex items-center justify-center gap-3 transition-all hover:scale-[1.015]"
-                style={{ background: `linear-gradient(135deg, ${T.primary} 0%, ${T.primaryD} 100%)`, color: T.white, fontFamily: H, boxShadow: `0 12px 40px ${T.primary}50`, cursor: "pointer" }}
+              {erroEnvio && (
+                <p role="alert" className="text-center text-sm mb-4" style={{ color: "#dc2626", fontFamily: B }}>
+                  {erroEnvio}
+                </p>
+              )}
+
+              <button type="submit" disabled={enviando}
+                className="w-full py-5 rounded-2xl text-base font-black flex items-center justify-center gap-3 transition-all hover:scale-[1.015] disabled:opacity-60"
+                style={{ background: `linear-gradient(135deg, ${T.primary} 0%, ${T.primaryD} 100%)`, color: T.white, fontFamily: H, boxShadow: `0 12px 40px ${T.primary}50`, cursor: enviando ? "wait" : "pointer" }}
                 onMouseEnter={e => e.currentTarget.style.boxShadow = `0 16px 48px ${T.primary}65`}
                 onMouseLeave={e => e.currentTarget.style.boxShadow = `0 12px 40px ${T.primary}50`}
               >
-                <Shield size={20} /> Receber meu Anel de Protetor <ArrowRight size={20} />
+                <Shield size={20} /> {enviando ? "Enviando..." : "Receber meu Anel de Protetor"} <ArrowRight size={20} />
               </button>
 
               <p className="text-center text-xs mt-4" style={{ color: T.muted, fontFamily: B }}>

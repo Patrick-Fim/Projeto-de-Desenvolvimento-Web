@@ -38,6 +38,7 @@ export async function POST(request) {
     const ref = await addDoc(collection(db, "voluntarios"), {
       nome: dados.nome,
       email: dados.email,
+      cidade: dados.cidade ?? null,
       anel: dados.anel ?? null,
       compromisso: dados.compromisso ?? null,
       criadoEm: serverTimestamp(),
