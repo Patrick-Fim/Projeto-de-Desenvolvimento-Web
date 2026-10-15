@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import ScrollToTop from '../components/ScrollToTop';
 
 const elementRings = [
   { icon: '🌿', name: 'Terra', color: 'bg-ring-earth', desc: 'Preservação de matas, hortas comunitárias e reflorestamento urbano' },
@@ -87,6 +88,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      {/* Voltar ao Topo */}
+      <ScrollToTop />
     </main>
   );
 }
