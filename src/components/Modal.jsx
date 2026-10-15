@@ -20,7 +20,6 @@ export default function Modal({ isOpen, onClose, title, children }) {
   if (!isOpen) return null;
 
   return (
-    {/* Clique na camada externa fecha o modal; cliques no conteúdo são interceptados abaixo. */}
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn"
       onClick={onClose}
@@ -28,6 +27,7 @@ export default function Modal({ isOpen, onClose, title, children }) {
       aria-modal="true"
       aria-labelledby="modal-title"
     >
+      {/* Clique na camada externa fecha o modal; cliques no conteúdo são interceptados abaixo. */}
       <div
         className="bg-card w-full max-w-lg rounded-2xl p-6 shadow-2xl border border-border space-y-4 animate-scaleUp"
         onClick={(e) => e.stopPropagation()}
