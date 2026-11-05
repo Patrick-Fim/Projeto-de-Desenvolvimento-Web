@@ -10,12 +10,11 @@ import Foguinho from './Foguinho';
 import { useAuth } from '../context/AuthContext';
 
 // Destinos compartilhados pelas versões desktop e mobile da navegação.
+// /estilo e /componentes são páginas internas de referência (ver docs/PADROES.md).
 const NAV_LINKS = [
   { href: '/', label: 'Início' },
   { href: '/missoes', label: 'Missões' },
   { href: '/ranking', label: 'Ranking' },
-  { href: '/estilo', label: 'Guia de Estilos' },
-  { href: '/componentes', label: 'Componentes' },
 ];
 
 export default function Navbar() {
