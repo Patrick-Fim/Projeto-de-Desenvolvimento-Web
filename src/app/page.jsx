@@ -1,11 +1,11 @@
 import Link from 'next/link';
 import ScrollToTop from '../components/ScrollToTop';
+import AsciiGlobe from '../components/AsciiGlobe';
 import { RINGS } from '../lib/rings';
 import {
   FaArrowRight,
   FaBullhorn,
   FaCircleCheck,
-  FaEarthAmericas,
   FaHandshake,
   FaMagnifyingGlass,
   FaShieldHeart,
@@ -107,8 +107,9 @@ export default function HomePage() {
           {/* Ilustração: o planeta cercado pelos cinco anéis. */}
           <div className="relative mx-auto aspect-square w-full max-w-[340px] sm:max-w-[420px]" aria-hidden="true">
             <div className="absolute inset-[6%] rounded-full border-2 border-dashed border-primary/25 animate-orbit" />
-            <div className="absolute inset-[22%] flex items-center justify-center rounded-full bg-linear-to-br from-primary to-ring-water shadow-2xl shadow-primary/30 animate-float">
-              <FaEarthAmericas className="text-7xl text-white/95 sm:text-8xl" />
+            <div className="absolute inset-[24%] rounded-full bg-primary/25 blur-3xl" />
+            <div className="absolute inset-[17%]">
+              <AsciiGlobe />
             </div>
             {RINGS.map((ring, i) => {
               const Icon = ring.Icon;
