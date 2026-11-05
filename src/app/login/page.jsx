@@ -35,7 +35,12 @@ const ERROS_FIREBASE = {
   'auth/too-many-requests': 'Muitas tentativas. Aguarde um pouco e tente de novo.',
   'auth/network-request-failed': 'Sem conexão com a internet.',
   'auth/operation-not-allowed': 'O login por e-mail ainda não foi ativado no Firebase.',
+  'auth/configuration-not-found': 'O Authentication ainda não foi ativado no projeto Firebase.',
 };
+
+// Mensagem amigável; para erros desconhecidos, mostra o código para facilitar o suporte.
+const mensagemDeErro = (err) =>
+  ERROS_FIREBASE[err?.code] || `Não foi possível concluir. Tente novamente.${err?.code ? ` (${err.code})` : ''}`;
 
 const VANTAGENS = [
   { Icon: FaStar, texto: 'Ganhe XP e suba de nível a cada missão' },
@@ -130,7 +135,7 @@ export default function LoginPage() {
       router.replace(destinoSeguro());
     } catch (err) {
       definirNomePendente('');
-      setErroGeral(ERROS_FIREBASE[err.code] || 'Não foi possível concluir. Tente novamente.');
+      setErroGeral(mensagemDeErro(err));
     } finally {
       setEnviando(false);
     }
@@ -148,7 +153,7 @@ export default function LoginPage() {
       await sendPasswordResetEmail(auth, email);
       setAviso('Se este e-mail estiver cadastrado, você receberá um link para criar uma nova senha.');
     } catch (err) {
-      setErroGeral(ERROS_FIREBASE[err.code] || 'Não foi possível enviar o e-mail agora.');
+      setErroGeral(mensagemDeErro(err));
     }
   };
 

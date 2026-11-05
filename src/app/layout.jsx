@@ -1,4 +1,5 @@
 import "../styles/globals.css";
+import Script from "next/script";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { AuthProvider } from "../context/AuthContext";
@@ -14,11 +15,12 @@ const scriptTema = `(function(){try{var t=localStorage.getItem('theme');var d=t=
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: scriptTema }} />
-      </head>
+    <html lang="pt-BR" data-scroll-behavior="smooth" suppressHydrationWarning>
       <body className="flex min-h-screen flex-col bg-background text-foreground antialiased">
+        <Script id="tema-inicial" strategy="beforeInteractive">
+          {scriptTema}
+        </Script>
+
         {/* Atalho de teclado para pular a navegação (acessibilidade). */}
         <a
           href="#conteudo"
