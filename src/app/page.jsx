@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import ScrollToTop from '../components/ScrollToTop';
 import AsciiGlobe from '../components/AsciiGlobe';
+import { SeloProtetores, FaixaEstatisticas } from '../components/EstatisticasAoVivo';
 import { RINGS } from '../lib/rings';
 import {
   FaArrowRight,
@@ -10,14 +11,6 @@ import {
   FaMagnifyingGlass,
   FaShieldHeart,
 } from 'react-icons/fa6';
-
-// Números de impacto (conteúdo ilustrativo).
-const STATS = [
-  { value: '100k+', label: 'Protetores ativos' },
-  { value: '1.250', label: 'Missões concluídas' },
-  { value: '890', label: 'Denúncias atendidas' },
-  { value: '50+', label: 'Cidades atendidas' },
-];
 
 // Passo a passo de uso da plataforma.
 const STEPS = [
@@ -58,13 +51,7 @@ export default function HomePage() {
 
         <div className="mx-auto grid max-w-6xl items-center gap-14 px-6 py-16 md:py-24 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="space-y-7 text-center animate-fadeIn lg:text-left">
-            <span className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-accent-text">
-              <span className="relative flex h-2 w-2" aria-hidden="true">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
-              </span>
-              100.740 Protetores Ativos
-            </span>
+            <SeloProtetores />
 
             <h1 className="text-4xl font-black leading-[1.05] tracking-tight text-foreground sm:text-5xl lg:text-6xl">
               O Poder é de Vocês.{' '}
@@ -130,14 +117,7 @@ export default function HomePage() {
 
       {/* Números de impacto apresentados em quatro indicadores. */}
       <section className="border-b border-border bg-card" aria-label="Números de impacto">
-        <dl className="mx-auto grid max-w-6xl grid-cols-2 gap-8 px-6 py-10 md:grid-cols-4">
-          {STATS.map((stat) => (
-            <div key={stat.label} className="flex flex-col-reverse text-center md:border-l md:border-border md:pl-8 md:text-left md:first:border-l-0 md:first:pl-0">
-              <dt className="mt-1 text-sm font-semibold text-foreground-muted">{stat.label}</dt>
-              <dd className="font-display text-3xl font-black text-foreground sm:text-4xl">{stat.value}</dd>
-            </div>
-          ))}
-        </dl>
+        <FaixaEstatisticas />
       </section>
 
       {/* Apresenta os anéis a partir dos dados centralizados em lib/rings. */}

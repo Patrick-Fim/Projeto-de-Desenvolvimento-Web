@@ -1,12 +1,20 @@
 import Button from './Button';
 import { getRing, STATUS_STYLES } from '../lib/rings';
-import { FaLocationDot, FaUsers, FaArrowRight } from 'react-icons/fa6';
+import { FaLocationDot, FaUsers, FaArrowRight, FaCircleCheck, FaHandshake, FaUserPen } from 'react-icons/fa6';
 
-export default function MissionCard({ mission, onSelectMission }) {
-  const { title, description, ring = 'terra', location, status = 'Ativa', participants = 0 } = mission;
+// Selos opcionais mostrando a relação do usuário logado com a missão.
+const SELOS_USUARIO = {
+  concluida: { texto: 'Você concluiu', Icon: FaCircleCheck, classe: 'bg-accent/10 text-accent-text' },
+  engajada: { texto: 'Você está engajado', Icon: FaHandshake, classe: 'bg-primary/10 text-primary-text' },
+  criada: { texto: 'Sua denúncia', Icon: FaUserPen, classe: 'bg-ring-wind/10 text-ring-wind' },
+};
+
+export default function MissionCard({ mission, onSelectMission, estadoUsuario }) {
+  const { title, description, ring = 'terra', location, status = 'Ativa', participants = 0, creatorName } = mission;
   const currentRing = getRing(ring);
   const RingIcon = currentRing.Icon;
   const statusClass = STATUS_STYLES[status] || STATUS_STYLES.Ativa;
+  const selo = SELOS_USUARIO[estadoUsuario];
 
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/10">
@@ -27,7 +35,15 @@ export default function MissionCard({ mission, onSelectMission }) {
 
         {/* Título e Descrição */}
         <h3 className="mt-4 line-clamp-2 text-lg font-bold leading-snug text-foreground">{title}</h3>
+        {creatorName && <p className="mt-1 text-xs text-foreground-muted">por {creatorName}</p>}
         <p className="mt-2 line-clamp-3 flex-1 text-sm leading-relaxed text-foreground-muted">{description}</p>
+
+        {selo && (
+          <span className={`mt-4 inline-flex items-center gap-1.5 self-start rounded-full px-2.5 py-1 text-xs font-bold ${selo.classe}`}>
+            <selo.Icon aria-hidden="true" />
+            {selo.texto}
+          </span>
+        )}
 
         {/* Rodapé do Card */}
         <div className="mt-5 flex items-center justify-between gap-3 border-t border-border pt-4 text-xs font-medium text-foreground-muted">
@@ -46,9 +62,9 @@ export default function MissionCard({ mission, onSelectMission }) {
           size="sm"
           className="mt-4 w-full"
           onClick={() => onSelectMission && onSelectMission(mission)}
-          ariaLabel={`Engajar-se na missão ${title}`}
+          ariaLabel={`Ver detalhes da missão ${title}`}
         >
-          Engajar na Missão
+          Ver detalhes
           <FaArrowRight aria-hidden="true" className="transition-transform group-hover:translate-x-0.5" />
         </Button>
       </div>

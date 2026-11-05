@@ -2,7 +2,7 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: "AIzaSyDJejQ_Ct66sntp7balwc4mPWCSAA8RfcM",
   authDomain: "protetores-da-terra-c5f97.firebaseapp.com",
   projectId: "protetores-da-terra-c5f97",
@@ -12,6 +12,6 @@ const firebaseConfig = {
 };
 
 // Evita reinicializar o app no hot-reload do Next.
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+export const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
 export const db = getFirestore(app);

@@ -3,11 +3,13 @@ import { db } from "../../../lib/firebase";
 import {
   collection,
   getDocs,
-  addDoc,
-  deleteDoc,
   doc,
   setDoc,
+  runTransaction,
 } from "firebase/firestore";
+import { usuarioDaRequisicao, naoAutorizado } from "../../../lib/servidor/autenticacao";
+import { refUsuario, perfilNovo, perfilProprio } from "../../../lib/servidor/perfis";
+import { XP } from "../../../lib/gamificacao";
 
 const COLECAO = "missoes";
 
@@ -53,10 +55,29 @@ async function semearSeVazio() {
     SEED.map(({ id, ...dados }) =>
       setDoc(doc(db, COLECAO, id), {
         ...dados,
+        creatorName: "Comunidade",
+        participantIds: [],
+        concluidoPor: [],
         createdAt: new Date().toISOString(),
       })
     )
   );
+}
+
+// Remove o e-mail de quem denunciou antes de enviar a missão para o navegador.
+function missaoPublica(id, dados) {
+  // eslint-disable-next-line no-unused-vars
+  const { reporterEmail, ...resto } = dados;
+  return {
+    id,
+    ...resto,
+    participantIds: resto.participantIds || [],
+    concluidoPor: resto.concluidoPor || [],
+  };
+}
+
+function erro(mensagem, status) {
+  return NextResponse.json({ message: mensagem }, { status });
 }
 
 // GET - Listar todas as missões/denúncias (Firestore)
@@ -64,7 +85,7 @@ export async function GET() {
   try {
     await semearSeVazio();
     const snap = await getDocs(collection(db, COLECAO));
-    const missoes = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const missoes = snap.docs.map((d) => missaoPublica(d.id, d.data()));
     // Mais recentes primeiro.
     missoes.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
     return NextResponse.json(missoes, { status: 200 });
@@ -76,42 +97,57 @@ export async function GET() {
   }
 }
 
-// POST - Criar uma nova denúncia/missão (grava no Firestore)
+// POST - Criar uma nova denúncia/missão. Exige login: quem cria vira o dono e ganha XP.
 export async function POST(request) {
+  const usuario = await usuarioDaRequisicao(request);
+  if (!usuario) return naoAutorizado();
+
   try {
     const body = await request.json();
-    const { title, description, ring, location, reporterName, reporterEmail } =
-      body;
+    const { title, description, ring, location, reporterName, reporterEmail } = body;
 
-    if (
-      !title ||
-      !description ||
-      !ring ||
-      !location ||
-      !reporterName ||
-      !reporterEmail
-    ) {
-      return NextResponse.json(
-        { message: "Todos os campos obrigatórios devem ser preenchidos." },
-        { status: 400 }
-      );
+    if (!title || !description || !ring || !location || !reporterName || !reporterEmail) {
+      return erro("Todos os campos obrigatórios devem ser preenchidos.", 400);
     }
 
-    const novaMissao = {
-      title,
-      description,
-      ring,
-      location,
-      reporterName,
-      reporterEmail,
-      status: "Análise",
-      participants: 1,
-      createdAt: new Date().toISOString(),
-    };
+    const refMissao = doc(collection(db, COLECAO));
+    const resultado = await runTransaction(db, async (transacao) => {
+      const refPerfil = refUsuario(usuario.uid);
+      const snapPerfil = await transacao.get(refPerfil);
+      const perfil = snapPerfil.exists() ? snapPerfil.data() : perfilNovo(usuario);
 
-    const ref = await addDoc(collection(db, COLECAO), novaMissao);
+      const novaMissao = {
+        title,
+        description,
+        ring,
+        location,
+        reporterName,
+        reporterEmail,
+        creatorUid: usuario.uid,
+        creatorName: perfil.nome,
+        status: "Análise",
+        participants: 0,
+        participantIds: [],
+        concluidoPor: [],
+        createdAt: new Date().toISOString(),
+      };
 
-    return NextResponse.json({ id: ref.id, ...novaMissao }, { status: 201 });
+      perfil.missoesCriadas = (perfil.missoesCriadas || 0) + 1;
+      perfil.xp = (perfil.xp || 0) + XP.criarMissao;
+
+      transacao.set(refMissao, novaMissao);
+      transacao.set(refPerfil, perfil);
+      return { novaMissao, perfil };
+    });
+
+    return NextResponse.json(
+      {
+        missao: missaoPublica(refMissao.id, resultado.novaMissao),
+        perfil: perfilProprio(usuario.uid, resultado.perfil),
+        xpGanho: XP.criarMissao,
+      },
+      { status: 201 }
+    );
   } catch (error) {
     return NextResponse.json(
       { message: "Falha ao registrar denúncia.", error: error.message },
@@ -120,23 +156,123 @@ export async function POST(request) {
   }
 }
 
-// DELETE - Remover uma denúncia/missão por ID (?id=...) do Firestore
-export async function DELETE(request) {
+// PATCH - Engajar em uma missão ou marcar como concluída (?id=...).
+// Corpo: { "acao": "engajar" } ou { "acao": "concluir" }
+export async function PATCH(request) {
+  const usuario = await usuarioDaRequisicao(request);
+  if (!usuario) return naoAutorizado();
+
+  const id = new URL(request.url).searchParams.get("id");
+  if (!id) return erro("O ID da missão é obrigatório.", 400);
+
+  const { acao } = await request.json().catch(() => ({}));
+  if (acao !== "engajar" && acao !== "concluir") {
+    return erro('A ação deve ser "engajar" ou "concluir".', 400);
+  }
+
   try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get("id");
+    const resultado = await runTransaction(db, async (transacao) => {
+      const refMissao = doc(db, COLECAO, id);
+      const refPerfil = refUsuario(usuario.uid);
+      const [snapMissao, snapPerfil] = await Promise.all([
+        transacao.get(refMissao),
+        transacao.get(refPerfil),
+      ]);
 
-    if (!id) {
-      return NextResponse.json(
-        { message: "O ID da missão é obrigatório para exclusão." },
-        { status: 400 }
-      );
-    }
+      if (!snapMissao.exists()) return { falha: ["Missão ambiental não encontrada.", 404] };
 
-    await deleteDoc(doc(db, COLECAO, id));
+      const missao = snapMissao.data();
+      const perfil = snapPerfil.exists() ? snapPerfil.data() : perfilNovo(usuario);
+      const participantes = missao.participantIds || [];
+      const concluiram = missao.concluidoPor || [];
+
+      if (missao.creatorUid === usuario.uid) {
+        return { falha: ["Você registrou esta missão; ela é para outros protetores.", 400] };
+      }
+
+      let xpGanho = 0;
+      if (acao === "engajar") {
+        if (participantes.includes(usuario.uid)) return { falha: ["Você já está engajado nesta missão.", 409] };
+        missao.participantIds = [...participantes, usuario.uid];
+        missao.participants = (missao.participants || 0) + 1;
+        perfil.engajadas = [...(perfil.engajadas || []), id];
+        xpGanho = XP.engajar;
+      } else {
+        if (!participantes.includes(usuario.uid)) return { falha: ["Engaje-se na missão antes de concluí-la.", 400] };
+        if (concluiram.includes(usuario.uid)) return { falha: ["Você já concluiu esta missão.", 409] };
+        missao.concluidoPor = [...concluiram, usuario.uid];
+        perfil.concluidas = [...(perfil.concluidas || []), id];
+        const aneis = perfil.aneisConcluidos || [];
+        if (missao.ring && !aneis.includes(missao.ring)) perfil.aneisConcluidos = [...aneis, missao.ring];
+        xpGanho = XP.concluir;
+      }
+
+      perfil.xp = (perfil.xp || 0) + xpGanho;
+      transacao.set(refMissao, missao);
+      transacao.set(refPerfil, perfil);
+      return { missao, perfil, xpGanho };
+    });
+
+    if (resultado.falha) return erro(...resultado.falha);
 
     return NextResponse.json(
-      { message: "Missão removida com sucesso." },
+      {
+        missao: missaoPublica(id, resultado.missao),
+        perfil: perfilProprio(usuario.uid, resultado.perfil),
+        xpGanho: resultado.xpGanho,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    return NextResponse.json(
+      { message: "Erro ao atualizar a missão.", error: error.message },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE - Remover uma denúncia/missão por ID (?id=...). Só o criador pode excluir.
+export async function DELETE(request) {
+  const usuario = await usuarioDaRequisicao(request);
+  if (!usuario) return naoAutorizado();
+
+  try {
+    const id = new URL(request.url).searchParams.get("id");
+    if (!id) return erro("O ID da missão é obrigatório para exclusão.", 400);
+
+    const resultado = await runTransaction(db, async (transacao) => {
+      const refMissao = doc(db, COLECAO, id);
+      const refPerfil = refUsuario(usuario.uid);
+      const [snapMissao, snapPerfil] = await Promise.all([
+        transacao.get(refMissao),
+        transacao.get(refPerfil),
+      ]);
+
+      if (!snapMissao.exists()) return { falha: ["Missão ambiental não encontrada.", 404] };
+      if (snapMissao.data().creatorUid !== usuario.uid) {
+        return { falha: ["Só quem registrou a missão pode excluí-la.", 403] };
+      }
+
+      transacao.delete(refMissao);
+
+      // Devolve o XP da criação, para que criar e apagar não vire "farm" de pontos.
+      if (snapPerfil.exists()) {
+        const perfil = snapPerfil.data();
+        perfil.missoesCriadas = Math.max(0, (perfil.missoesCriadas || 0) - 1);
+        perfil.xp = Math.max(0, (perfil.xp || 0) - XP.criarMissao);
+        transacao.set(refPerfil, perfil);
+        return { perfil };
+      }
+      return {};
+    });
+
+    if (resultado.falha) return erro(...resultado.falha);
+
+    return NextResponse.json(
+      {
+        message: "Missão removida com sucesso.",
+        perfil: resultado.perfil ? perfilProprio(usuario.uid, resultado.perfil) : null,
+      },
       { status: 200 }
     );
   } catch (error) {

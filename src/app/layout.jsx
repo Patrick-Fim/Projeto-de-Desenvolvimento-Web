@@ -1,6 +1,7 @@
 import "../styles/globals.css";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import { AuthProvider } from "../context/AuthContext";
 
 // Metadados compartilhados por todas as páginas da aplicação.
 export const metadata = {
@@ -26,12 +27,15 @@ export default function RootLayout({ children }) {
           Pular para o conteúdo
         </a>
 
-        {/* Cabeçalho e rodapé envolvem o conteúdo da rota atual. */}
-        <Navbar />
-        <div id="conteudo" className="flex-1">
-          {children}
-        </div>
-        <Footer />
+        {/* O AuthProvider deixa o usuário logado disponível para todas as telas. */}
+        <AuthProvider>
+          {/* Cabeçalho e rodapé envolvem o conteúdo da rota atual. */}
+          <Navbar />
+          <div id="conteudo" className="flex-1">
+            {children}
+          </div>
+          <Footer />
+        </AuthProvider>
       </body>
     </html>
   );

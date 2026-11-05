@@ -6,6 +6,8 @@ const LINKS = [
   { href: '/', label: 'Início' },
   { href: '/missoes', label: 'Painel de Missões' },
   { href: '/denuncia', label: 'Registrar Denúncia' },
+  { href: '/ranking', label: 'Ranking' },
+  { href: '/perfil', label: 'Meu Perfil' },
   { href: '/estilo', label: 'Guia de Estilos' },
   { href: '/componentes', label: 'Componentes' },
 ];

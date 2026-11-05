@@ -1,12 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import MissionCard from '../../components/MissionCard';
 import Modal from '../../components/Modal';
 import Button from '../../components/Button';
 import PageHeader from '../../components/PageHeader';
 import { RINGS, getRing } from '../../lib/rings';
+import { XP, nivelDe } from '../../lib/gamificacao';
+import { useAuth } from '../../context/AuthContext';
 import {
+  FaHandshake,
+  FaFlagCheckered,
+  FaRightToBracket,
+  FaUserPen,
   FaMagnifyingGlass,
   FaLocationDot,
   FaUsers,
@@ -22,6 +29,9 @@ import {
 const FILTROS = [{ id: 'todos', label: 'Todos os Anéis' }, ...RINGS];
 
 export default function MissoesPage() {
+  const { usuario, perfil, setPerfil, chamarApi } = useAuth();
+  const [acaoEmAndamento, setAcaoEmAndamento] = useState(false);
+
   // Estados da lista, da busca e dos feedbacks das operações.
   const [missoes, setMissoes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -62,9 +72,9 @@ export default function MissoesPage() {
 
   const handleDeleteMission = async (id) => {
     try {
-      // Exclui a ocorrência e atualiza a lista após a resposta da API.
-      const res = await fetch(`/api/missoes?id=${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Erro ao excluir missão');
+      // Exclui a ocorrência (só o criador pode) e atualiza a lista após a resposta da API.
+      const resposta = await chamarApi(`/api/missoes?id=${id}`, { method: 'DELETE' });
+      if (resposta.perfil) setPerfil(resposta.perfil);
 
       setIsModalOpen(false);
       setConfirmingDelete(false);
@@ -73,6 +83,45 @@ export default function MissoesPage() {
     } catch (err) {
       mostrarToast('error', err.message);
     }
+  };
+
+  // Engaja ou conclui a missão: a API valida, atualiza a missão e dá o XP.
+  const handleAcaoMissao = async (acao) => {
+    if (!selectedMission) return;
+    try {
+      setAcaoEmAndamento(true);
+      const nivelAntes = nivelDe(perfil?.xp).numero;
+      const resposta = await chamarApi(`/api/missoes?id=${selectedMission.id}`, {
+        method: 'PATCH',
+        body: { acao },
+      });
+
+      setPerfil(resposta.perfil);
+      setMissoes((lista) => lista.map((m) => (m.id === resposta.missao.id ? resposta.missao : m)));
+      setSelectedMission(resposta.missao);
+
+      const novoNivel = nivelDe(resposta.perfil.xp);
+      const base = acao === 'engajar' ? 'Você se engajou na missão!' : 'Missão concluída!';
+      mostrarToast(
+        'success',
+        novoNivel.numero > nivelAntes
+          ? `${base} +${resposta.xpGanho} XP. Você subiu para o nível ${novoNivel.nome}!`
+          : `${base} +${resposta.xpGanho} XP`
+      );
+    } catch (err) {
+      mostrarToast('error', err.message);
+    } finally {
+      setAcaoEmAndamento(false);
+    }
+  };
+
+  // Relação do usuário logado com cada missão (para os selos dos cards).
+  const estadoDe = (m) => {
+    if (!usuario) return null;
+    if (m.creatorUid === usuario.uid) return 'criada';
+    if ((m.concluidoPor || []).includes(usuario.uid)) return 'concluida';
+    if ((m.participantIds || []).includes(usuario.uid)) return 'engajada';
+    return null;
   };
 
   const handleCloseModal = () => {
@@ -190,6 +239,7 @@ export default function MissoesPage() {
                 <MissionCard
                   key={mission.id}
                   mission={mission}
+                  estadoUsuario={estadoDe(mission)}
                   onSelectMission={(m) => {
                     setSelectedMission(m);
                     setConfirmingDelete(false);
@@ -277,30 +327,62 @@ export default function MissoesPage() {
                 </div>
               </div>
             ) : (
-              /* Ações Padrão */
+              /* Ações Padrão: dependem da relação do usuário com a missão */
               <div className="flex flex-col-reverse gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
-                <button
-                  onClick={() => setConfirmingDelete(true)}
-                  className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-bold text-danger-text transition hover:bg-danger-text/10"
-                >
-                  <FaTrash aria-hidden="true" />
-                  Excluir Ocorrência
-                </button>
+                {estadoDe(selectedMission) === 'criada' ? (
+                  <button
+                    onClick={() => setConfirmingDelete(true)}
+                    className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-bold text-danger-text transition hover:bg-danger-text/10"
+                  >
+                    <FaTrash aria-hidden="true" />
+                    Excluir Ocorrência
+                  </button>
+                ) : (
+                  <span />
+                )}
 
-                <div className="flex flex-col-reverse gap-2 sm:flex-row">
+                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center">
                   <Button variant="outline" size="sm" onClick={handleCloseModal}>
                     Fechar
                   </Button>
-                  <Button
-                    variant="ecological"
-                    size="sm"
-                    onClick={() => {
-                      handleCloseModal();
-                      mostrarToast('success', `Você se voluntariou para: "${selectedMission.title}"!`);
-                    }}
-                  >
-                    Confirmar Engajamento
-                  </Button>
+
+                  {!usuario && (
+                    <Link
+                      href="/login?voltar=/missoes"
+                      className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-dark px-3.5 py-2 text-sm font-semibold text-white hover:brightness-110 dark:text-slate-950"
+                    >
+                      <FaRightToBracket aria-hidden="true" />
+                      Entre para participar
+                    </Link>
+                  )}
+
+                  {usuario && estadoDe(selectedMission) === 'criada' && (
+                    <span className="inline-flex items-center gap-2 rounded-lg bg-ring-wind/10 px-3.5 py-2 text-sm font-bold text-ring-wind">
+                      <FaUserPen aria-hidden="true" />
+                      Você registrou esta missão
+                    </span>
+                  )}
+
+                  {usuario && estadoDe(selectedMission) === 'concluida' && (
+                    <span className="inline-flex items-center gap-2 rounded-lg bg-accent/10 px-3.5 py-2 text-sm font-bold text-accent-text">
+                      <FaCircleCheck aria-hidden="true" />
+                      Missão concluída por você
+                    </span>
+                  )}
+
+                  {usuario && estadoDe(selectedMission) === 'engajada' && (
+                    <Button variant="ecological" size="sm" disabled={acaoEmAndamento} onClick={() => handleAcaoMissao('concluir')}>
+                      <FaFlagCheckered aria-hidden="true" />
+                      {acaoEmAndamento ? 'Salvando...' : `Marcar como concluída (+${XP.concluir} XP)`}
+                    </Button>
+                  )}
+
+                  {usuario && estadoDe(selectedMission) === null && (
+                    <Button variant="ecological" size="sm" disabled={acaoEmAndamento} onClick={() => handleAcaoMissao('engajar')}>
+                      <FaHandshake aria-hidden="true" />
+                      {acaoEmAndamento ? 'Salvando...' : `Confirmar Engajamento (+${XP.engajar} XP)`}
+                    </Button>
+                  )}
                 </div>
               </div>
             )}

@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useAuth } from '../../context/AuthContext';
+import { XP } from '../../lib/gamificacao';
 import Button from '../../components/Button';
 import PageHeader from '../../components/PageHeader';
 import { RINGS, getRing } from '../../lib/rings';
@@ -12,6 +14,8 @@ import {
   FaShieldHeart,
   FaArrowRight,
   FaPaperPlane,
+  FaRightToBracket,
+  FaStar,
 } from 'react-icons/fa6';
 
 const ESTADO_INICIAL = {
@@ -55,8 +59,20 @@ function Campo({ id, label, error, children }) {
 }
 
 export default function DenunciaPage() {
+  const { usuario, perfil, carregando, chamarApi, setPerfil } = useAuth();
+
   // Valores controlados dos campos do formulário.
   const [formData, setFormData] = useState(ESTADO_INICIAL);
+
+  // Preenche nome e e-mail com os dados de quem está logado.
+  useEffect(() => {
+    if (!perfil) return;
+    setFormData((anterior) => ({
+      ...anterior,
+      reporterName: anterior.reporterName || perfil.nome || '',
+      reporterEmail: anterior.reporterEmail || perfil.email || '',
+    }));
+  }, [perfil]);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -131,17 +147,18 @@ export default function DenunciaPage() {
 
     try {
       setSubmitting(true);
-      // Envia os dados validados para a API de missões.
-      const res = await fetch('/api/missoes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+      // Envia os dados validados para a API de missões (com o token de login).
+      const resposta = await chamarApi('/api/missoes', { method: 'POST', body: formData });
+      setPerfil(resposta.perfil);
+
+      setSuccessMessage(
+        `Sua denúncia foi registrada com sucesso e enviada para o painel de missões! +${resposta.xpGanho} XP`
+      );
+      setFormData({
+        ...ESTADO_INICIAL,
+        reporterName: perfil?.nome || '',
+        reporterEmail: perfil?.email || '',
       });
-
-      if (!res.ok) throw new Error('Falha ao enviar denúncia para o servidor.');
-
-      setSuccessMessage('Sua denúncia foi registrada com sucesso e enviada para o painel de missões!');
-      setFormData(ESTADO_INICIAL);
       setErrors({});
     } catch (err) {
       setApiError(err.message);
@@ -155,6 +172,44 @@ export default function DenunciaPage() {
     'aria-invalid': errors[name] ? true : undefined,
     'aria-describedby': errors[name] ? `${name}-erro` : undefined,
   });
+
+  // Registrar denúncia exige login: assim a missão fica ligada ao seu criador.
+  if (carregando || !usuario) {
+    return (
+      <main>
+        <PageHeader
+          eyebrow={<><FaBullhorn aria-hidden="true" /> Formulário Oficial</>}
+          title="Registrar Ocorrência Ambiental"
+          description="Preencha os campos abaixo para catalogar um crime ou demanda ecológica na sua região. A denúncia passará a integrar o Painel de Missões."
+        />
+        <div className="mx-auto max-w-6xl px-6 py-10">
+          {carregando ? (
+            <div className="h-64 animate-pulse rounded-2xl bg-foreground/10" aria-busy="true">
+              <span className="sr-only">Carregando...</span>
+            </div>
+          ) : (
+            <div className="mx-auto max-w-lg rounded-2xl border border-border bg-card p-8 text-center shadow-sm">
+              <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-2xl text-primary-text">
+                <FaRightToBracket aria-hidden="true" />
+              </span>
+              <h2 className="mt-4 text-xl font-bold text-foreground">Entre para registrar uma denúncia</h2>
+              <p className="mt-2 text-sm text-foreground-muted">
+                Assim a ocorrência fica ligada ao seu perfil e você ganha{' '}
+                <strong className="text-accent-text">+{XP.criarMissao} XP</strong> por cada denúncia.
+              </p>
+              <Link
+                href="/login?voltar=/denuncia"
+                className="mt-6 inline-flex items-center justify-center gap-2 rounded-xl bg-primary-dark px-6 py-3 font-bold text-white hover:brightness-110 dark:text-slate-950"
+              >
+                <FaRightToBracket aria-hidden="true" />
+                Entrar ou criar conta
+              </Link>
+            </div>
+          )}
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main>
@@ -337,6 +392,16 @@ export default function DenunciaPage() {
                 </li>
               ))}
             </ol>
+          </div>
+
+          <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6 text-sm">
+            <p className="flex items-center gap-2 font-bold text-amber-800 dark:text-amber-300">
+              <FaStar aria-hidden="true" />
+              Ganhe +{XP.criarMissao} XP
+            </p>
+            <p className="mt-2 leading-relaxed text-foreground-muted">
+              Cada denúncia registrada soma pontos no seu perfil e te leva para o topo do ranking.
+            </p>
           </div>
 
           <div className="rounded-2xl border border-accent/30 bg-accent/10 p-6 text-sm">

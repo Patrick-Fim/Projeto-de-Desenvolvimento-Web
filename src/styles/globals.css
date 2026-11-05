@@ -56,6 +56,19 @@ h1, h2, h3, h4, .font-display {
 .animate-float { animation: float 6s ease-in-out infinite; }
 .animate-orbit { animation: orbit 60s linear infinite; }
 
+/* Chama do foguinho tremulando. */
+@keyframes chama {
+  0%, 100% { transform: scale(1) rotate(-4deg); }
+  50% { transform: scale(1.15) rotate(4deg); }
+}
+.animate-chama { animation: chama 1.2s ease-in-out infinite; transform-origin: 50% 90%; }
+
+/* Barra de XP crescendo ao carregar. */
+@keyframes encher {
+  from { transform: scaleX(0); }
+}
+.animate-encher { animation: encher 0.9s ease-out both; transform-origin: left; }
+
 /* Respeita quem prefere menos movimento (acessibilidade). */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
