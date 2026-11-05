@@ -3,12 +3,13 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { FaBars, FaXmark, FaMoon, FaSun, FaBullhorn } from 'react-icons/fa6';
+import Logo from './Logo';
 
 // Destinos compartilhados pelas versões desktop e mobile da navegação.
 const NAV_LINKS = [
   { href: '/', label: 'Início' },
   { href: '/missoes', label: 'Painel de Missões' },
-  { href: '/denuncia', label: 'Registrar Denúncia' },
   { href: '/estilo', label: 'Guia de Estilos' },
   { href: '/componentes', label: 'Componentes' },
 ];
@@ -24,7 +25,7 @@ export default function Navbar() {
     setMounted(true);
     const savedTheme = localStorage.getItem('theme');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
+
     if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
       setIsDark(true);
       document.documentElement.classList.add('dark');
@@ -47,91 +48,93 @@ export default function Navbar() {
     }
   };
 
+  const linkClass = (isActive) =>
+    `rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
+      isActive
+        ? 'bg-primary/10 text-primary-text'
+        : 'text-foreground-muted hover:bg-foreground/5 hover:text-foreground'
+    }`;
+
   return (
-    <header className="sticky top-0 z-40 bg-card border-b border-border shadow-xs">
-      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 text-lg font-black text-foreground hover:opacity-90 transition">
-          <span className="text-2xl">🌎</span>
-          <span>Protetores.Terra</span>
-        </Link>
+    <header className="sticky top-0 z-40 border-b border-border bg-card/85 backdrop-blur-md">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
+        <Logo />
 
         {/* Navegação Desktop */}
-        <div className="hidden md:flex items-center gap-6">
-          <nav className="flex items-center gap-6" aria-label="Navegação Principal">
-            {NAV_LINKS.map((link) => {
-              const isActive = pathname === link.href;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`text-sm font-semibold transition-colors pb-1 ${
-                    isActive
-                      ? 'text-primary-dark border-b-2 border-primary-dark font-bold'
-                      : 'text-foreground-muted hover:text-foreground'
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              );
-            })}
-          </nav>
-
-          {/* Botão de Alternar Tema (Desktop) */}
-          {mounted && (
-            <button
-              onClick={toggleTheme}
-              aria-label={isDark ? 'Mudar para modo claro' : 'Mudar para modo escuro'}
-              className="p-2 rounded-xl border border-border bg-background hover:bg-card text-foreground transition-all flex items-center gap-1.5 text-xs font-bold cursor-pointer"
-            >
-              <span>{isDark ? '☀️' : '🌙'}</span>
-              <span>{isDark ? 'Claro' : 'Escuro'}</span>
-            </button>
-          )}
-        </div>
-
-        {/* Ações Mobile (Botão Tema + Menu) */}
-        <div className="md:hidden flex items-center gap-2">
-          {mounted && (
-            <button
-              onClick={toggleTheme}
-              aria-label={isDark ? 'Mudar para modo claro' : 'Mudar para modo escuro'}
-              className="p-2 rounded-lg border border-border bg-background text-foreground text-sm font-bold cursor-pointer"
-            >
-              {isDark ? '☀️' : '🌙'}
-            </button>
-          )}
-
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="p-2 text-foreground hover:bg-background rounded-lg border border-border"
-            aria-label="Alternar menu de navegação"
-          >
-            {isOpen ? '✕' : '☰'}
-          </button>
-        </div>
-      </div>
-
-      {/* Menu Mobile */}
-      {isOpen && (
-        <nav className="md:hidden border-t border-border bg-card px-6 py-4 space-y-3" aria-label="Navegação Mobile">
+        <nav className="hidden items-center gap-1 md:flex" aria-label="Navegação Principal">
           {NAV_LINKS.map((link) => {
             const isActive = pathname === link.href;
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                onClick={() => setIsOpen(false)}
-                className={`block text-sm font-semibold py-2 px-3 rounded-lg transition-colors ${
-                  isActive
-                    ? 'bg-primary-dark text-white font-bold'
-                    : 'text-foreground-muted hover:bg-background hover:text-foreground'
-                }`}
+                aria-current={isActive ? 'page' : undefined}
+                className={linkClass(isActive)}
               >
                 {link.label}
               </Link>
             );
           })}
+        </nav>
+
+        <div className="flex items-center gap-2">
+          {/* Botão de Alternar Tema */}
+          {mounted && (
+            <button
+              onClick={toggleTheme}
+              aria-label={isDark ? 'Mudar para modo claro' : 'Mudar para modo escuro'}
+              title={isDark ? 'Modo claro' : 'Modo escuro'}
+              className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-border bg-background text-foreground transition-colors hover:bg-primary/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              {isDark ? <FaSun aria-hidden="true" /> : <FaMoon aria-hidden="true" />}
+            </button>
+          )}
+
+          <Link
+            href="/denuncia"
+            aria-current={pathname === '/denuncia' ? 'page' : undefined}
+            className="hidden items-center gap-2 rounded-lg bg-primary-dark px-4 py-2 text-sm font-bold text-white shadow-sm shadow-primary/20 transition hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card sm:inline-flex dark:text-slate-950"
+          >
+            <FaBullhorn aria-hidden="true" />
+            Registrar Denúncia
+          </Link>
+
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            aria-label={isOpen ? 'Fechar menu de navegação' : 'Abrir menu de navegação'}
+            aria-expanded={isOpen}
+            aria-controls="menu-mobile"
+            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-border text-foreground hover:bg-foreground/5 md:hidden"
+          >
+            {isOpen ? <FaXmark aria-hidden="true" /> : <FaBars aria-hidden="true" />}
+          </button>
+        </div>
+      </div>
+
+      {/* Menu Mobile */}
+      {isOpen && (
+        <nav
+          id="menu-mobile"
+          className="border-t border-border bg-card px-4 py-3 animate-fadeIn md:hidden"
+          aria-label="Navegação Mobile"
+        >
+          <ul className="space-y-1">
+            {[...NAV_LINKS, { href: '/denuncia', label: 'Registrar Denúncia' }].map((link) => {
+              const isActive = pathname === link.href;
+              return (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    onClick={() => setIsOpen(false)}
+                    aria-current={isActive ? 'page' : undefined}
+                    className={`block ${linkClass(isActive)}`}
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
         </nav>
       )}
     </header>

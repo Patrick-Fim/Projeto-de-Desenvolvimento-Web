@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Button from '../../components/Button';
 import MissionCard from '../../components/MissionCard';
 import Modal from '../../components/Modal';
+import PageHeader from '../../components/PageHeader';
 
 // Dados mockados para testar os cards
 const mockMissions = [
@@ -56,19 +57,14 @@ export default function ComponentesPage() {
   };
 
   return (
-    <main className="min-h-screen p-6 md:p-12 space-y-12 max-w-6xl mx-auto">
-      {/* Cabeçalho */}
-      <header className="border-b border-primary/20 pb-6">
-        <span className="text-xs font-semibold tracking-wider uppercase text-accent-text bg-accent/15 border border-accent/30 px-3 py-1 rounded-full">
-          ✓ Showcase de Componentes
-        </span>
-        <h1 className="text-4xl font-extrabold text-foreground mt-3">
-          Componentes Reutilizáveis
-        </h1>
-        <p className="text-foreground-muted mt-2 max-w-2xl">
-          Página de testes para validar o funcionamento do <code className="bg-primary/10 text-primary-text px-2 py-0.5 rounded font-mono">Button</code>, do <code className="bg-primary/10 text-primary-text px-2 py-0.5 rounded font-mono">MissionCard</code> e do <code className="bg-primary/10 text-primary-text px-2 py-0.5 rounded font-mono">Modal</code>.
-        </p>
-      </header>
+    <main>
+      <PageHeader
+        eyebrow="Showcase de Componentes"
+        title="Componentes Reutilizáveis"
+        description="Página de testes para validar o funcionamento do Button, do MissionCard e do Modal."
+      />
+
+      <div className="mx-auto max-w-6xl space-y-12 px-6 py-12">
 
       {/* Toast Feedback */}
       {toastMessage && (
@@ -169,6 +165,7 @@ export default function ComponentesPage() {
           </div>
         )}
       </Modal>
+      </div>
     </main>
   );
 }
