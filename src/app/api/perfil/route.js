@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getDoc, updateDoc } from 'firebase/firestore';
 import { usuarioDaRequisicao, naoAutorizado } from '../../../lib/servidor/autenticacao';
 import { refUsuario, perfilProprio, ANEIS_VALIDOS } from '../../../lib/servidor/perfis';
+import { imagemPertenceA, apagarImagemDoDono } from '../../../lib/servidor/imagens';
 
 // GET - Retorna o perfil do usuário logado.
 export async function GET(request) {
@@ -22,13 +23,14 @@ export async function GET(request) {
   }
 }
 
-// PATCH - Edita nome, cidade, bio e anel favorito do usuário logado.
+// PATCH - Edita nome, cidade, bio, anel favorito, foto de perfil e banner do usuário logado.
 export async function PATCH(request) {
   const usuario = await usuarioDaRequisicao(request);
   if (!usuario) return naoAutorizado();
 
   try {
-    const { nome, cidade = '', bio = '', anel } = await request.json();
+    const corpo = await request.json();
+    const { nome, cidade = '', bio = '', anel } = corpo;
     const nomeLimpo = String(nome || '').trim();
 
     // Validação no servidor (além da validação do formulário).
@@ -46,13 +48,33 @@ export async function PATCH(request) {
     }
 
     const ref = refUsuario(usuario.uid);
-    await updateDoc(ref, {
+    const atual = (await getDoc(ref)).data() || {};
+    const campos = {
       nome: nomeLimpo,
       nomeProvisorio: false,
       cidade: String(cidade).trim(),
       bio: String(bio).trim(),
       anel,
-    });
+    };
+
+    // Foto e banner: só aceita imagens enviadas pelo próprio usuário (undefined = não mexe).
+    for (const campo of ['avatarId', 'bannerId']) {
+      if (corpo[campo] === undefined) continue;
+      const novo = corpo[campo] || null;
+      if (novo !== atual[campo] && !(await imagemPertenceA(novo, usuario.uid))) {
+        return NextResponse.json({ message: 'Imagem inválida.' }, { status: 400 });
+      }
+      campos[campo] = novo;
+    }
+
+    await updateDoc(ref, campos);
+
+    // Apaga as imagens que foram trocadas ou removidas.
+    for (const campo of ['avatarId', 'bannerId']) {
+      if (campo in campos && atual[campo] && atual[campo] !== campos[campo]) {
+        await apagarImagemDoDono(atual[campo], usuario.uid);
+      }
+    }
 
     const snap = await getDoc(ref);
     return NextResponse.json(perfilProprio(usuario.uid, snap.data()), { status: 200 });

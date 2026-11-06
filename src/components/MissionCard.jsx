@@ -2,6 +2,8 @@ import Link from 'next/link';
 import Button from './Button';
 import { getRing, STATUS_STYLES } from '../lib/rings';
 import { totalProtetores } from '../lib/missoes';
+import { urlImagem } from '../lib/imagens';
+import SeloPrazo from './SeloPrazo';
 import { FaLocationDot, FaUsers, FaArrowRight, FaCircleCheck, FaHandshake, FaUserPen, FaCircleInfo } from 'react-icons/fa6';
 
 // Selos opcionais mostrando a relação do usuário logado com a missão.
@@ -12,7 +14,7 @@ const SELOS_USUARIO = {
 };
 
 export default function MissionCard({ mission, onSelectMission, estadoUsuario, destaque = false }) {
-  const { title, description, ring = 'terra', location, status = 'Ativa', creatorName } = mission;
+  const { title, description, ring = 'terra', location, status = 'Ativa', creatorName, capaId, prazo } = mission;
   const protetores = totalProtetores(mission);
   const currentRing = getRing(ring);
   const RingIcon = currentRing.Icon;
@@ -26,7 +28,11 @@ export default function MissionCard({ mission, onSelectMission, estadoUsuario, d
         destaque ? `ring-4 ring-offset-4 ring-offset-background shadow-2xl animate-destaque ${currentRing.realce}` : ''
       }`}
     >
-      {/* Faixa com a cor do anel */}
+      {/* Capa da missão (opcional) e faixa com a cor do anel */}
+      {capaId && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={urlImagem(capaId)} alt="" aria-hidden="true" loading="lazy" className="h-36 w-full object-cover" />
+      )}
       <span className={`h-1.5 w-full ${currentRing.bg}`} aria-hidden="true" />
 
       <div className="flex flex-1 flex-col p-6">
@@ -53,11 +59,16 @@ export default function MissionCard({ mission, onSelectMission, estadoUsuario, d
         {creatorName && <p className="mt-1 text-xs text-foreground-muted">por {creatorName}</p>}
         <p className="mt-2 line-clamp-3 flex-1 text-sm leading-relaxed text-foreground-muted">{description}</p>
 
-        {selo && (
-          <span className={`mt-4 inline-flex items-center gap-1.5 self-start rounded-full px-2.5 py-1 text-xs font-bold ${selo.classe}`}>
-            <selo.Icon aria-hidden="true" />
-            {selo.texto}
-          </span>
+        {(selo || prazo) && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {selo && (
+              <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${selo.classe}`}>
+                <selo.Icon aria-hidden="true" />
+                {selo.texto}
+              </span>
+            )}
+            <SeloPrazo prazo={prazo} />
+          </div>
         )}
 
         {/* Rodapé do Card */}

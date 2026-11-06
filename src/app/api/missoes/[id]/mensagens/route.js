@@ -4,9 +4,7 @@ import { db } from '../../../../../lib/firebase';
 import { usuarioDaRequisicao, naoAutorizado } from '../../../../../lib/servidor/autenticacao';
 import { refUsuario } from '../../../../../lib/servidor/perfis';
 import { ehMembro, CHAT } from '../../../../../lib/missoes';
-
-// Imagem aceita: data URL em base64 de um formato de imagem comum.
-const FORMATO_IMAGEM = /^data:image\/(jpeg|png|webp|gif);base64,[A-Za-z0-9+/=]+$/;
+import { FORMATO_DATA_URL as FORMATO_IMAGEM } from '../../../../../lib/imagens';
 
 function erro(mensagem, status) {
   return NextResponse.json({ message: mensagem }, { status });

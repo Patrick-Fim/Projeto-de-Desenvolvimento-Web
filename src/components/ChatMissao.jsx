@@ -14,6 +14,7 @@ import {
 import { db } from '../lib/firebase';
 import { hoje, diaAnterior } from '../lib/datas';
 import { CHAT } from '../lib/missoes';
+import { comprimirImagem } from '../lib/imagens';
 import BolhaMensagem from './BolhaMensagem';
 
 const FUSO = 'America/Sao_Paulo';
@@ -35,34 +36,17 @@ function rotuloDia(iso) {
   return formatoData.format(new Date(iso));
 }
 
-// Reduz a imagem (até 1280px, JPEG) para caber no Firestore sem pesar na conversa.
-async function comprimirImagem(arquivo) {
-  const bitmap = await createImageBitmap(arquivo);
-  const escala = Math.min(1, 1280 / Math.max(bitmap.width, bitmap.height));
-  const largura = Math.round(bitmap.width * escala);
-  const altura = Math.round(bitmap.height * escala);
-
-  const canvas = document.createElement('canvas');
-  canvas.width = largura;
-  canvas.height = altura;
-  const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#ffffff'; // fundo branco para PNGs com transparência
-  ctx.fillRect(0, 0, largura, altura);
-  ctx.drawImage(bitmap, 0, 0, largura, altura);
-  bitmap.close?.();
-
-  let qualidade = 0.8;
-  let resultado = canvas.toDataURL('image/jpeg', qualidade);
-  while (resultado.length > CHAT.limiteImagem && qualidade > 0.35) {
-    qualidade -= 0.1;
-    resultado = canvas.toDataURL('image/jpeg', qualidade);
-  }
-  if (resultado.length > CHAT.limiteImagem) throw new Error('Não foi possível reduzir esta imagem. Tente outra.');
-  return resultado;
-}
-
 // Conversa em tempo real da missão. Só membros (criador e participantes) leem e escrevem.
-export default function ChatMissao({ missaoId, podeParticipar, usuarioUid, chamarApi, totalMembros, acaoBloqueado }) {
+// fotosMembros: { uid: avatarId } para mostrar a foto de perfil atual de cada autor.
+export default function ChatMissao({
+  missaoId,
+  podeParticipar,
+  usuarioUid,
+  chamarApi,
+  totalMembros,
+  acaoBloqueado,
+  fotosMembros = {},
+}) {
   const [mensagens, setMensagens] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erroConversa, setErroConversa] = useState('');
@@ -145,7 +129,7 @@ export default function ChatMissao({ missaoId, podeParticipar, usuarioUid, chama
     }
     try {
       setProcessandoImagem(true);
-      setImagem(await comprimirImagem(arquivo));
+      setImagem(await comprimirImagem(arquivo, 'chat'));
       textoRef.current?.focus();
     } catch (err) {
       setErroEnvio(err.message || 'Não foi possível ler esta imagem.');
@@ -300,6 +284,7 @@ export default function ChatMissao({ missaoId, podeParticipar, usuarioUid, chama
 
                 <BolhaMensagem
                   mensagem={m}
+                  fotoId={fotosMembros[m.autorUid]}
                   minha={minha}
                   agrupada={agrupada}
                   onAbrirImagem={setImagemAberta}

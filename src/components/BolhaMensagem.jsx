@@ -11,6 +11,7 @@ const formatoHora = new Intl.DateTimeFormat('pt-BR', {
 // Cores vêm dos tokens --bolha-propria e --bolha-outra (src/styles/theme.css).
 export default function BolhaMensagem({
   mensagem,
+  fotoId,
   minha = false,
   agrupada = false,
   onAbrirImagem,
@@ -37,7 +38,7 @@ export default function BolhaMensagem({
   return (
     <div className={`group flex items-end gap-2 ${minha ? 'flex-row-reverse' : ''} ${agrupada ? 'mt-1' : 'mt-3'}`}>
       {!minha &&
-        (agrupada ? <span className="w-8 shrink-0" /> : <Avatar nome={autorNome} anel={autorAnel} tamanho="sm" />)}
+        (agrupada ? <span className="w-8 shrink-0" /> : <Avatar nome={autorNome} anel={autorAnel} fotoId={fotoId} tamanho="sm" />)}
 
       <div className={`flex min-w-0 max-w-[80%] flex-col ${minha ? 'items-end' : 'items-start'}`}>
         {!agrupada && !minha && (

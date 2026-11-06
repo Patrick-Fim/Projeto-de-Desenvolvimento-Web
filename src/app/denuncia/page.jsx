@@ -9,6 +9,11 @@ import { XP } from '../../lib/gamificacao';
 import Button from '../../components/Button';
 import PageHeader from '../../components/PageHeader';
 import { RINGS, getRing } from '../../lib/rings';
+import Campo, { classeCampo } from '../../components/Campo';
+import SeletorImagem from '../../components/SeletorImagem';
+import { salvarImagemSeNova } from '../../lib/imagens';
+import { erroPrazo } from '../../lib/missoes';
+import { hoje } from '../../lib/datas';
 import {
   FaBullhorn,
   FaCircleCheck,
@@ -27,6 +32,7 @@ const ESTADO_INICIAL = {
   ring: 'terra',
   location: '',
   description: '',
+  prazo: '',
 };
 
 const PASSOS = [
@@ -35,30 +41,8 @@ const PASSOS = [
   'A denúncia entra no Painel de Missões.',
 ];
 
-// Estilo base dos campos; muda a borda quando há erro.
-const inputClass = (hasError) =>
-  `w-full rounded-xl border bg-background px-4 py-3 text-sm text-foreground placeholder:text-foreground-muted/70 transition focus:outline-none focus:ring-2 focus:ring-primary/30 ${
-    hasError ? 'border-danger-text focus:border-danger-text' : 'border-border focus:border-primary'
-  }`;
-
-// Agrupa rótulo, campo e mensagem de erro com os atributos de acessibilidade.
-function Campo({ id, label, error, children }) {
-  return (
-    <div className="space-y-1.5">
-      <label htmlFor={id} className="flex items-center gap-1 text-sm font-bold text-foreground">
-        {label}
-        <span className="text-danger-text" aria-hidden="true">*</span>
-      </label>
-      {children}
-      {error && (
-        <p id={`${id}-erro`} className="flex items-center gap-1.5 text-xs font-semibold text-danger-text animate-fadeIn">
-          <FaTriangleExclamation aria-hidden="true" />
-          {error}
-        </p>
-      )}
-    </div>
-  );
-}
+// Campos padrão do formulário vêm do componente compartilhado.
+const inputClass = classeCampo;
 
 export default function DenunciaPage() {
   const router = useRouter();
@@ -68,6 +52,8 @@ export default function DenunciaPage() {
 
   // Valores controlados dos campos do formulário.
   const [formData, setFormData] = useState(ESTADO_INICIAL);
+  // Capa da missão (data URL da imagem escolhida ou null).
+  const [capa, setCapa] = useState(null);
 
   // Preenche nome e e-mail com os dados de quem está logado.
   useEffect(() => {
@@ -115,6 +101,11 @@ export default function DenunciaPage() {
       else if (val.length < 15) error = 'A descrição deve ter pelo menos 15 caracteres.';
     }
 
+    if (name === 'prazo') {
+      // Opcional: se preenchido, não pode estar no passado.
+      error = erroPrazo(val);
+    }
+
     setErrors((prev) => ({ ...prev, [name]: error }));
     return error;
   };
@@ -152,8 +143,12 @@ export default function DenunciaPage() {
 
     try {
       setSubmitting(true);
-      // Envia os dados validados para a API de missões (com o token de login).
-      const resposta = await chamarApi('/api/missoes', { method: 'POST', body: formData });
+      // Envia a capa (se houver) e depois os dados validados para a API de missões.
+      const capaId = await salvarImagemSeNova(chamarApi, capa, null, 'capa');
+      const resposta = await chamarApi('/api/missoes', {
+        method: 'POST',
+        body: { ...formData, prazo: formData.prazo || null, capaId },
+      });
       setPerfil(resposta.perfil);
 
       // Comemora com a animação do anel e depois leva ao painel, destacando a missão nova.
@@ -171,6 +166,7 @@ export default function DenunciaPage() {
         reporterName: perfil?.nome || '',
         reporterEmail: perfil?.email || '',
       });
+      setCapa(null);
       setErrors({});
     } catch (err) {
       setApiError(err.message);
@@ -347,20 +343,36 @@ export default function DenunciaPage() {
                 <p className="mt-2 text-xs text-foreground-muted">{getRing(formData.ring).hint}</p>
               </fieldset>
 
-              <Campo id="location" label="Cidade e Estado (UF)" error={errors.location}>
-                <input
-                  id="location"
-                  name="location"
-                  type="text"
-                  autoComplete="address-level2"
-                  value={formData.location}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  placeholder="Ex: Ijuí, RS"
-                  className={inputClass(errors.location)}
-                  {...a11y('location')}
-                />
-              </Campo>
+              <div className="grid gap-5 sm:grid-cols-2">
+                <Campo id="location" label="Cidade e Estado (UF)" error={errors.location}>
+                  <input
+                    id="location"
+                    name="location"
+                    type="text"
+                    autoComplete="address-level2"
+                    value={formData.location}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    placeholder="Ex: Ijuí, RS"
+                    className={inputClass(errors.location)}
+                    {...a11y('location')}
+                  />
+                </Campo>
+
+                <Campo id="prazo" label="Data limite" obrigatorio={false} error={errors.prazo} dica="Opcional. Depois dessa data, ninguém mais entra na missão.">
+                  <input
+                    id="prazo"
+                    name="prazo"
+                    type="date"
+                    min={hoje()}
+                    value={formData.prazo}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    className={inputClass(errors.prazo)}
+                    {...a11y('prazo')}
+                  />
+                </Campo>
+              </div>
 
               <Campo id="description" label="Descrição Detalhada" error={errors.description}>
                 <textarea
@@ -375,6 +387,15 @@ export default function DenunciaPage() {
                   {...a11y('description')}
                 />
               </Campo>
+
+              <SeletorImagem
+                id="capa"
+                rotulo="Imagem de capa (opcional)"
+                formato="capa"
+                valor={capa}
+                onChange={setCapa}
+                dica="Aparece no card e no topo da página da missão. Uma foto do local ajuda a comunidade."
+              />
             </section>
 
             {/* Botão de Envio */}

@@ -8,6 +8,17 @@ import PageHeader from '../../components/PageHeader';
 import CelebracaoAnel from '../../components/CelebracaoAnel';
 import AvisoConquista from '../../components/AvisoConquista';
 import BolhaMensagem from '../../components/BolhaMensagem';
+import SeletorImagem from '../../components/SeletorImagem';
+import SeloPrazo from '../../components/SeloPrazo';
+import Campo, { classeCampo, a11yCampo } from '../../components/Campo';
+import { hoje, diaAnterior } from '../../lib/datas';
+
+// Datas de exemplo para o selo de prazo (relativas a hoje).
+const diasAFrente = (n) => {
+  const data = new Date(`${hoje()}T12:00:00Z`);
+  data.setUTCDate(data.getUTCDate() + n);
+  return data.toISOString().slice(0, 10);
+};
 import { CONQUISTAS } from '../../lib/gamificacao';
 import { RINGS } from '../../lib/rings';
 
@@ -51,6 +62,10 @@ export default function ComponentesPage() {
   const [anelCelebracao, setAnelCelebracao] = useState(null);
   // Conquista em demonstração (índice em CONQUISTAS; null = nenhuma).
   const [conquistaDemo, setConquistaDemo] = useState(null);
+  // Imagens escolhidas nos seletores de demonstração.
+  const [demoAvatar, setDemoAvatar] = useState(null);
+  const [demoBanner, setDemoBanner] = useState(null);
+  const [demoCampo, setDemoCampo] = useState('');
 
   const handleOpenModal = (mission) => {
     // Guarda a missão escolhida antes de abrir seus detalhes.
@@ -208,6 +223,33 @@ export default function ComponentesPage() {
             agrupada
             mensagem={{ autorNome: 'Você', autorAnel: 'terra', apagada: true, criadoEm: '2026-11-05T13:06:00.000Z' }}
           />
+        </div>
+      </section>
+
+      {/* Teste 7: Formulários (Campo, SeletorImagem, SeloPrazo) */}
+      <section className="space-y-6 bg-card p-6 rounded-2xl border border-border shadow-sm">
+        <h2 className="text-2xl font-bold text-foreground [overflow-wrap:anywhere]">7. Formulários: Campo, SeletorImagem e SeloPrazo</h2>
+        <p className="text-sm text-foreground-muted">
+          Peças usadas em todos os formulários (perfil, denúncia e edição de missão). A imagem é comprimida no navegador antes de enviar.
+        </p>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          <SeletorImagem id="demo-avatar" rotulo="Foto de perfil (avatar)" formato="avatar" valor={demoAvatar} onChange={setDemoAvatar} />
+          <Campo id="demo-campo" label="Campo com validação" error={demoCampo && demoCampo.length < 5 ? 'Digite pelo menos 5 caracteres.' : ''} dica="Digite algo para ver a validação.">
+            <input id="demo-campo" value={demoCampo} onChange={(e) => setDemoCampo(e.target.value)} className={classeCampo(demoCampo && demoCampo.length < 5)} {...a11yCampo('demo-campo', demoCampo && demoCampo.length < 5)} />
+          </Campo>
+        </div>
+
+        <SeletorImagem id="demo-banner" rotulo="Banner" formato="banner" valor={demoBanner} onChange={setDemoBanner} />
+
+        <div>
+          <p className="text-sm font-bold text-foreground">Selo de prazo</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <SeloPrazo prazo={diasAFrente(12)} completo />
+            <SeloPrazo prazo={diasAFrente(2)} />
+            <SeloPrazo prazo={hoje()} />
+            <SeloPrazo prazo={diaAnterior(hoje())} />
+          </div>
         </div>
       </section>
 

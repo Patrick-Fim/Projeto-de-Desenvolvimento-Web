@@ -11,6 +11,8 @@ import { usuarioDaRequisicao, naoAutorizado } from "../../../lib/servidor/autent
 import { refUsuario, perfilNovo, perfilProprio } from "../../../lib/servidor/perfis";
 import { XP } from "../../../lib/gamificacao";
 import { missaoPublica } from "../../../lib/servidor/missoes";
+import { imagemPertenceA, apagarImagemDoDono } from "../../../lib/servidor/imagens";
+import { infoPrazo, validarCamposMissao } from "../../../lib/missoes";
 
 const COLECAO = "missoes";
 
@@ -94,10 +96,15 @@ export async function POST(request) {
   try {
     const body = await request.json();
     const { title, description, ring, location, reporterName, reporterEmail } = body;
+    const prazo = body.prazo || null;
+    const capaId = body.capaId || null;
 
     if (!title || !description || !ring || !location || !reporterName || !reporterEmail) {
       return erro("Todos os campos obrigatórios devem ser preenchidos.", 400);
     }
+    const erros = validarCamposMissao({ title, description, ring, location, prazo });
+    if (Object.keys(erros).length) return erro(Object.values(erros)[0], 400);
+    if (!(await imagemPertenceA(capaId, usuario.uid))) return erro("Imagem de capa inválida.", 400);
 
     const refMissao = doc(collection(db, COLECAO));
     const resultado = await runTransaction(db, async (transacao) => {
@@ -112,6 +119,8 @@ export async function POST(request) {
         location,
         reporterName,
         reporterEmail,
+        prazo,
+        capaId,
         creatorUid: usuario.uid,
         creatorName: perfil.nome,
         status: "Análise",
@@ -182,6 +191,7 @@ export async function PATCH(request) {
       let xpGanho = 0;
       if (acao === "engajar") {
         if (participantes.includes(usuario.uid)) return { falha: ["Você já está engajado nesta missão.", 409] };
+        if (infoPrazo(missao.prazo)?.encerrada) return { falha: ["O prazo desta missão já terminou.", 400] };
         missao.participantIds = [...participantes, usuario.uid];
         missao.participants = (missao.participants || 0) + 1;
         perfil.engajadas = [...(perfil.engajadas || []), id];
@@ -243,6 +253,7 @@ export async function DELETE(request) {
       }
 
       transacao.delete(refMissao);
+      const capaId = snapMissao.data().capaId || null;
 
       // Devolve o XP da criação, para que criar e apagar não vire "farm" de pontos.
       if (snapPerfil.exists()) {
@@ -250,12 +261,13 @@ export async function DELETE(request) {
         perfil.missoesCriadas = Math.max(0, (perfil.missoesCriadas || 0) - 1);
         perfil.xp = Math.max(0, (perfil.xp || 0) - XP.criarMissao);
         transacao.set(refPerfil, perfil);
-        return { perfil };
+        return { perfil, capaId };
       }
-      return {};
+      return { capaId };
     });
 
     if (resultado.falha) return erro(...resultado.falha);
+    await apagarImagemDoDono(resultado.capaId, usuario.uid);
 
     return NextResponse.json(
       {

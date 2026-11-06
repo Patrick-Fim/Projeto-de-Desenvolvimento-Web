@@ -117,7 +117,7 @@ export default function Navbar() {
               aria-current={pathname === '/perfil' ? 'page' : undefined}
               className="hidden items-center gap-2 rounded-full border border-border bg-background py-1 pl-1 pr-2 transition hover:border-primary/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:inline-flex"
             >
-              <Avatar nome={perfil.nome} anel={perfil.anel} tamanho="sm" />
+              <Avatar nome={perfil.nome} anel={perfil.anel} fotoId={perfil.avatarId} tamanho="sm" />
               <Foguinho dias={perfil.sequenciaAtual} />
             </Link>
           )}

@@ -8,7 +8,8 @@ import Button from '../../components/Button';
 import PageHeader from '../../components/PageHeader';
 import { RINGS, getRing } from '../../lib/rings';
 import { XP, nivelDe } from '../../lib/gamificacao';
-import { totalProtetores } from '../../lib/missoes';
+import { totalProtetores, infoPrazo } from '../../lib/missoes';
+import SeloPrazo from '../../components/SeloPrazo';
 import { useAuth } from '../../context/AuthContext';
 import {
   FaHandshake,
@@ -314,6 +315,7 @@ export default function MissoesPage() {
               <RingModalIcon aria-hidden="true" />
               Anel {ringModal.label}
             </span>
+            <SeloPrazo prazo={selectedMission.prazo} completo className="ml-2" />
 
             <p className="text-sm leading-relaxed text-foreground-muted">{selectedMission.description}</p>
 
@@ -409,10 +411,16 @@ export default function MissoesPage() {
                   )}
 
                   {usuario && estadoDe(selectedMission) === null && (
-                    <Button variant="ecological" size="sm" disabled={acaoEmAndamento} onClick={() => handleAcaoMissao('engajar')}>
-                      <FaHandshake aria-hidden="true" />
-                      {acaoEmAndamento ? 'Salvando...' : `Confirmar Engajamento (+${XP.engajar} XP)`}
-                    </Button>
+                    infoPrazo(selectedMission.prazo)?.encerrada ? (
+                      <span className="inline-flex items-center gap-2 rounded-lg bg-foreground/5 px-3.5 py-2 text-sm font-bold text-foreground-muted">
+                        Prazo encerrado
+                      </span>
+                    ) : (
+                      <Button variant="ecological" size="sm" disabled={acaoEmAndamento} onClick={() => handleAcaoMissao('engajar')}>
+                        <FaHandshake aria-hidden="true" />
+                        {acaoEmAndamento ? 'Salvando...' : `Confirmar Engajamento (+${XP.engajar} XP)`}
+                      </Button>
+                    )
                   )}
                 </div>
               </div>

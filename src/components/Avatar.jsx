@@ -1,14 +1,29 @@
 import { getRing } from '../lib/rings';
+import { urlImagem } from '../lib/imagens';
 
 const TAMANHOS = {
   sm: 'h-8 w-8 text-xs',
   md: 'h-11 w-11 text-sm',
   lg: 'h-24 w-24 text-3xl',
+  xl: 'h-28 w-28 text-4xl',
 };
 
-// Avatar com as iniciais do protetor, na cor do seu anel favorito.
-export default function Avatar({ nome = '', anel, tamanho = 'md', className = '' }) {
+// Avatar do protetor: a foto de perfil (fotoId) ou, sem foto, as iniciais na cor do anel favorito.
+export default function Avatar({ nome = '', anel, fotoId, tamanho = 'md', className = '' }) {
   const ring = getRing(anel);
+
+  if (fotoId) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={urlImagem(fotoId)}
+        alt=""
+        aria-hidden="true"
+        className={`inline-block shrink-0 rounded-full object-cover ring-2 ring-background ${ring.bg} ${TAMANHOS[tamanho]} ${className}`}
+      />
+    );
+  }
+
   const iniciais =
     nome
       .trim()

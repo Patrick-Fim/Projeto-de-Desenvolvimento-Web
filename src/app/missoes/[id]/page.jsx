@@ -15,14 +15,121 @@ import {
   FaTriangleExclamation,
   FaXmark,
   FaCrown,
+  FaPenToSquare,
+  FaCalendarXmark,
 } from 'react-icons/fa6';
 import { useAuth } from '../../../context/AuthContext';
-import { getRing, STATUS_STYLES } from '../../../lib/rings';
+import { RINGS, getRing, STATUS_STYLES } from '../../../lib/rings';
 import { XP, nivelDe } from '../../../lib/gamificacao';
-import { ehMembro, totalProtetores } from '../../../lib/missoes';
+import { ehMembro, totalProtetores, infoPrazo, validarCamposMissao } from '../../../lib/missoes';
+import { urlImagem, salvarImagemSeNova } from '../../../lib/imagens';
+import { hoje } from '../../../lib/datas';
 import Button from '../../../components/Button';
 import Avatar from '../../../components/Avatar';
+import Modal from '../../../components/Modal';
+import Campo, { classeCampo, a11yCampo } from '../../../components/Campo';
+import SeletorImagem from '../../../components/SeletorImagem';
+import SeloPrazo from '../../../components/SeloPrazo';
 import ChatMissao from '../../../components/ChatMissao';
+
+// Formulário de edição da missão (só o criador vê). Usa os mesmos campos e regras da criação.
+function FormEditarMissao({ missao, onSalvar, onCancelar }) {
+  const [dados, setDados] = useState({
+    title: missao.title || '',
+    ring: missao.ring || 'terra',
+    location: missao.location || '',
+    prazo: missao.prazo || '',
+    description: missao.description || '',
+    capa: urlImagem(missao.capaId),
+  });
+  const [erros, setErros] = useState({});
+  const [erroApi, setErroApi] = useState('');
+  const [salvando, setSalvando] = useState(false);
+
+  const alterar = (e) => {
+    const { name, value } = e.target;
+    setDados((anterior) => ({ ...anterior, [name]: value }));
+  };
+
+  const enviar = async (e) => {
+    e.preventDefault();
+    const novos = validarCamposMissao(dados, missao.prazo || null);
+    setErros(novos);
+    if (Object.keys(novos).length) return;
+    try {
+      setSalvando(true);
+      setErroApi('');
+      await onSalvar(dados);
+    } catch (err) {
+      setErroApi(err.message);
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  return (
+    <form onSubmit={enviar} noValidate className="space-y-5">
+      {erroApi && (
+        <p role="alert" className="flex items-center gap-2 rounded-xl bg-danger-text/10 p-3 text-sm font-semibold text-danger-text">
+          <FaTriangleExclamation aria-hidden="true" /> {erroApi}
+        </p>
+      )}
+
+      <SeletorImagem
+        id="editar-capa"
+        rotulo="Imagem de capa"
+        formato="capa"
+        valor={dados.capa}
+        onChange={(valor) => setDados((anterior) => ({ ...anterior, capa: valor }))}
+      />
+
+      <Campo id="editar-titulo" label="Título da Ocorrência" error={erros.title}>
+        <input id="editar-titulo" name="title" value={dados.title} onChange={alterar} className={classeCampo(erros.title)} {...a11yCampo('editar-titulo', erros.title)} />
+      </Campo>
+
+      <fieldset>
+        <legend className="text-sm font-bold text-foreground">Anel Elemental</legend>
+        <div className="mt-3 grid grid-cols-5 gap-2">
+          {RINGS.map((ring) => {
+            const marcado = dados.ring === ring.id;
+            const Icon = ring.Icon;
+            return (
+              <label
+                key={ring.id}
+                title={ring.label}
+                className={`flex cursor-pointer flex-col items-center gap-1 rounded-xl border-2 py-2 transition focus-within:ring-2 focus-within:ring-primary ${
+                  marcado ? `${ring.border} ${ring.soft}` : 'border-border hover:border-primary/40'
+                }`}
+              >
+                <input type="radio" name="ring" value={ring.id} checked={marcado} onChange={alterar} className="sr-only" />
+                <Icon aria-hidden="true" className={`text-lg ${ring.text}`} />
+                <span className="text-[11px] font-bold text-foreground">{ring.label}</span>
+              </label>
+            );
+          })}
+        </div>
+      </fieldset>
+
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Campo id="editar-local" label="Cidade e Estado (UF)" error={erros.location}>
+          <input id="editar-local" name="location" value={dados.location} onChange={alterar} className={classeCampo(erros.location)} {...a11yCampo('editar-local', erros.location)} />
+        </Campo>
+        <Campo id="editar-prazo" label="Data limite" obrigatorio={false} error={erros.prazo}>
+          <input id="editar-prazo" name="prazo" type="date" min={hoje()} value={dados.prazo} onChange={alterar} className={classeCampo(erros.prazo)} {...a11yCampo('editar-prazo', erros.prazo)} />
+        </Campo>
+      </div>
+
+      <Campo id="editar-descricao" label="Descrição Detalhada" error={erros.description}>
+        <textarea id="editar-descricao" name="description" rows="5" value={dados.description} onChange={alterar} className={`${classeCampo(erros.description)} resize-y`} {...a11yCampo('editar-descricao', erros.description)} />
+      </Campo>
+
+      <div className="flex flex-col-reverse justify-end gap-2 border-t border-border pt-5 sm:flex-row">
+        <Button variant="outline" size="sm" onClick={onCancelar}>Cancelar</Button>
+        <Button type="submit" size="sm" disabled={salvando}>{salvando ? 'Salvando...' : 'Salvar alterações'}</Button>
+      </div>
+    </form>
+  );
+}
 
 export default function MissaoPage() {
   const { id } = useParams();
@@ -34,6 +141,7 @@ export default function MissaoPage() {
   const [erro, setErro] = useState('');
   const [salvando, setSalvando] = useState(false);
   const [confirmandoExclusao, setConfirmandoExclusao] = useState(false);
+  const [editando, setEditando] = useState(false);
   const [toast, setToast] = useState(null);
 
   const mostrarToast = (type, text) => {
@@ -125,6 +233,20 @@ export default function MissaoPage() {
   const ehCriador = usuario?.uid === missao.creatorUid;
   const membro = ehMembro(missao, usuario?.uid);
   const concluiu = (missao.concluidoPor || []).includes(usuario?.uid);
+  const encerrada = infoPrazo(missao.prazo)?.encerrada;
+  const fotosMembros = Object.fromEntries(membros.map((m) => [m.uid, m.avatarId]));
+
+  // Salva a edição: envia a capa nova (se houver) e os campos pelo PUT.
+  const salvarEdicao = async ({ capa, ...campos }) => {
+    const capaId = await salvarImagemSeNova(chamarApi, capa, missao.capaId, 'capa');
+    await chamarApi(`/api/missoes/${id}`, {
+      method: 'PUT',
+      body: { ...campos, prazo: campos.prazo || null, capaId },
+    });
+    await carregar();
+    setEditando(false);
+    mostrarToast('success', 'Missão atualizada!');
+  };
 
   // Botão principal conforme a relação do usuário com a missão.
   let acaoPrincipal = null;
@@ -136,6 +258,12 @@ export default function MissaoPage() {
       >
         <FaRightToBracket aria-hidden="true" /> Entre para participar
       </Link>
+    );
+  } else if (!membro && encerrada) {
+    acaoPrincipal = (
+      <span className="inline-flex items-center gap-2 rounded-xl bg-foreground/5 px-4 py-2.5 text-sm font-bold text-foreground-muted">
+        <FaCalendarXmark aria-hidden="true" /> Prazo encerrado: não aceita novos protetores
+      </span>
     );
   } else if (!membro) {
     acaoPrincipal = (
@@ -167,13 +295,26 @@ export default function MissaoPage() {
 
       {/* Cabeçalho da missão */}
       <section className="relative overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
+        {/* Banner da missão (capa) e faixa com a cor do anel */}
+        {missao.capaId && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={urlImagem(missao.capaId)} alt="" aria-hidden="true" className="h-48 w-full object-cover md:h-64" />
+        )}
         <span className={`block h-2 w-full ${ring.bg}`} aria-hidden="true" />
         <div className="p-6 md:p-8">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-white dark:text-slate-950 ${ring.bg}`}>
-              <RingIcon aria-hidden="true" /> {ring.label}
-            </span>
-            <span className={`rounded-full border px-2.5 py-1 text-xs font-bold ${statusClass}`}>{missao.status}</span>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-white dark:text-slate-950 ${ring.bg}`}>
+                <RingIcon aria-hidden="true" /> {ring.label}
+              </span>
+              <span className={`rounded-full border px-2.5 py-1 text-xs font-bold ${statusClass}`}>{missao.status}</span>
+              <SeloPrazo prazo={missao.prazo} completo />
+            </div>
+            {ehCriador && (
+              <Button variant="outline" size="sm" onClick={() => setEditando(true)}>
+                <FaPenToSquare aria-hidden="true" /> Editar missão
+              </Button>
+            )}
           </div>
 
           <h1 className="mt-4 text-3xl font-black tracking-tight text-foreground md:text-4xl">{missao.title}</h1>
@@ -218,6 +359,7 @@ export default function MissaoPage() {
           usuarioUid={usuario?.uid}
           chamarApi={chamarApi}
           totalMembros={membros.length}
+          fotosMembros={fotosMembros}
           acaoBloqueado={acaoPrincipal}
         />
 
@@ -233,7 +375,7 @@ export default function MissaoPage() {
             <ul className="mt-4 space-y-3">
               {membros.map((m) => (
                 <li key={m.uid} className="flex items-center gap-3">
-                  <Avatar nome={m.nome} anel={m.anel} />
+                  <Avatar nome={m.nome} anel={m.anel} fotoId={m.avatarId} />
                   <div className="min-w-0 flex-1">
                     <p className="flex items-center gap-1.5 truncate text-sm font-bold text-foreground">
                       {m.nome}
@@ -252,6 +394,14 @@ export default function MissaoPage() {
           )}
         </aside>
       </div>
+
+      {ehCriador && (
+        <Modal isOpen={editando} onClose={() => setEditando(false)} title="Editar missão">
+          {editando && (
+            <FormEditarMissao missao={missao} onSalvar={salvarEdicao} onCancelar={() => setEditando(false)} />
+          )}
+        </Modal>
+      )}
 
       {toast && (
         <div
