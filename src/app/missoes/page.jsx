@@ -8,6 +8,7 @@ import Button from '../../components/Button';
 import PageHeader from '../../components/PageHeader';
 import { RINGS, getRing } from '../../lib/rings';
 import { XP, nivelDe } from '../../lib/gamificacao';
+import { totalProtetores } from '../../lib/missoes';
 import { useAuth } from '../../context/AuthContext';
 import {
   FaHandshake,
@@ -327,7 +328,7 @@ export default function MissoesPage() {
             <dl className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               {[
                 { Icon: FaLocationDot, label: 'Localização', value: selectedMission.location },
-                { Icon: FaUsers, label: 'Voluntários', value: `${selectedMission.participants} Protetores` },
+                { Icon: FaUsers, label: 'Protetores', value: `${totalProtetores(selectedMission)} na missão` },
                 { Icon: FaBolt, label: 'Status', value: selectedMission.status },
               ].map(({ Icon, label, value }) => (
                 <div key={label} className="rounded-xl border border-border bg-background p-3">

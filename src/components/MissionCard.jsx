@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Button from './Button';
 import { getRing, STATUS_STYLES } from '../lib/rings';
+import { totalProtetores } from '../lib/missoes';
 import { FaLocationDot, FaUsers, FaArrowRight, FaCircleCheck, FaHandshake, FaUserPen, FaCircleInfo } from 'react-icons/fa6';
 
 // Selos opcionais mostrando a relação do usuário logado com a missão.
@@ -11,7 +12,8 @@ const SELOS_USUARIO = {
 };
 
 export default function MissionCard({ mission, onSelectMission, estadoUsuario, destaque = false }) {
-  const { title, description, ring = 'terra', location, status = 'Ativa', participants = 0, creatorName } = mission;
+  const { title, description, ring = 'terra', location, status = 'Ativa', creatorName } = mission;
+  const protetores = totalProtetores(mission);
   const currentRing = getRing(ring);
   const RingIcon = currentRing.Icon;
   const statusClass = STATUS_STYLES[status] || STATUS_STYLES.Ativa;
@@ -66,7 +68,7 @@ export default function MissionCard({ mission, onSelectMission, estadoUsuario, d
           </span>
           <span className="flex shrink-0 items-center gap-1.5">
             <FaUsers aria-hidden="true" className="text-primary-text" />
-            {participants} <span className="sr-only">protetores</span>
+            {protetores} <span className="sr-only">{protetores === 1 ? 'protetor' : 'protetores'}</span>
           </span>
         </div>
 

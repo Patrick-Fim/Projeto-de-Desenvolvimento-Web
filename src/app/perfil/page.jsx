@@ -23,6 +23,7 @@ import { useAuth } from '../../context/AuthContext';
 import { RINGS, getRing } from '../../lib/rings';
 import { CONQUISTAS, XP, nivelDe } from '../../lib/gamificacao';
 import { diasDesde } from '../../lib/datas';
+import { totalProtetores } from '../../lib/missoes';
 import Avatar from '../../components/Avatar';
 import Foguinho from '../../components/Foguinho';
 import Button from '../../components/Button';
@@ -375,7 +376,7 @@ export default function PerfilPage() {
                   <li key={missao.id} className="flex items-center justify-between gap-3 py-3 text-sm">
                     <span className="min-w-0 truncate font-semibold text-foreground">{missao.title}</span>
                     <span className="shrink-0 text-xs text-foreground-muted">
-                      {missao.participants || 0} engajados · {(missao.concluidoPor || []).length} concluíram
+                      {totalProtetores(missao)} {totalProtetores(missao) === 1 ? 'protetor' : 'protetores'} · {(missao.concluidoPor || []).length} concluíram
                     </span>
                   </li>
                 ))}
