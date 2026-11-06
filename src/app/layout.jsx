@@ -3,6 +3,7 @@ import Script from "next/script";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { AuthProvider } from "../context/AuthContext";
+import NotificadorConquistas from "../components/NotificadorConquistas";
 
 // Metadados compartilhados por todas as páginas da aplicação.
 export const metadata = {
@@ -37,6 +38,8 @@ export default function RootLayout({ children }) {
             {children}
           </div>
           <Footer />
+          {/* Aviso animado quando o protetor desbloqueia uma conquista. */}
+          <NotificadorConquistas />
         </AuthProvider>
       </body>
     </html>

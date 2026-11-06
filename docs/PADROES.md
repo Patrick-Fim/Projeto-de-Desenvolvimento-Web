@@ -76,6 +76,8 @@ Opacidade: use o modificador do Tailwind (`bg-primary/10`, `border-accent/30`).
 | `Logo` | Marca (cabeçalho e rodapé) | — |
 | `AsciiGlobe` | Planeta em ASCII girando (canvas) | `className` |
 | `CelebracaoAnel` | Animação em tela cheia ao criar missão (partículas próprias de cada anel) | `anel`, `titulo`, `xp`, `onFim` |
+| `AvisoConquista` | Cartão "Conquista desbloqueada!" no canto inferior direito, com confetes (`canvas-confetti`) | `conquista`, `onFechar` |
+| `NotificadorConquistas` | Montado no layout: detecta conquistas novas no perfil e mostra uma de cada vez (lembra as já comemoradas no `localStorage`) | — |
 | `ChatMissao` | Chat em tempo real da missão, com envio de imagens | `missaoId`, `podeParticipar`, `usuarioUid`, `chamarApi`, `totalMembros`, `acaoBloqueado` |
 | `ScrollToTop` | Botão "voltar ao topo" | — |
 
