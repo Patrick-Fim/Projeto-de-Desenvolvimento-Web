@@ -4,18 +4,39 @@ import Link from 'next/link';
 import { FaComments, FaXmark, FaArrowLeft, FaUserPlus } from 'react-icons/fa6';
 import { useAuth } from '../context/AuthContext';
 import { useAmigos } from '../context/AmigosContext';
+import { getRing } from '../lib/rings';
 import Avatar from './Avatar';
 import Conversa from './Conversa';
 
-// Balão no canto inferior direito com as conversas privadas entre amigos.
+// Balão no canto inferior direito com o chat do time e as conversas privadas entre amigos.
 export default function ChatFlutuante() {
-  const { usuario } = useAuth();
-  const { amigos, recebidos, chatAberto, setChatAberto, conversaCom, setConversaCom, parCom } = useAmigos();
+  const { usuario, perfil } = useAuth();
+  const {
+    amigos,
+    recebidos,
+    chatAberto,
+    setChatAberto,
+    conversaCom,
+    setConversaCom,
+    conversaTime,
+    setConversaTime,
+    abrirTime,
+    parCom,
+  } = useAmigos();
 
   if (!usuario) return null;
 
   const amigoAtual = amigos.find((a) => a.uid === conversaCom);
   const pedidos = recebidos.length;
+  const anel = perfil?.anel;
+  const ring = getRing(anel);
+  const RingIcon = ring.Icon;
+
+  // Volta da conversa (time ou amigo) para a lista.
+  const voltarParaLista = () => {
+    setConversaCom(null);
+    setConversaTime(false);
+  };
 
   return (
     <>
@@ -26,12 +47,27 @@ export default function ChatFlutuante() {
           className="fixed bottom-24 right-4 z-[70] flex h-[min(34rem,calc(100vh-8rem))] w-[calc(100vw-2rem)] max-w-sm flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl animate-scaleUp sm:right-6"
         >
           <header className="flex items-center gap-2 border-b border-border px-3 py-3">
-            {amigoAtual ? (
+            {conversaTime ? (
               <>
                 <button
                   type="button"
-                  onClick={() => setConversaCom(null)}
-                  aria-label="Voltar para a lista de amigos"
+                  onClick={voltarParaLista}
+                  aria-label="Voltar para a lista de conversas"
+                  className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-foreground-muted hover:bg-foreground/5"
+                >
+                  <FaArrowLeft aria-hidden="true" />
+                </button>
+                <span className={`flex h-8 w-8 items-center justify-center rounded-full text-white dark:text-slate-950 ${ring.bg}`}>
+                  <RingIcon aria-hidden="true" />
+                </span>
+                <p className="min-w-0 flex-1 truncate font-bold text-foreground">Time {ring.label}</p>
+              </>
+            ) : amigoAtual ? (
+              <>
+                <button
+                  type="button"
+                  onClick={voltarParaLista}
+                  aria-label="Voltar para a lista de conversas"
                   className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-foreground-muted hover:bg-foreground/5"
                 >
                   <FaArrowLeft aria-hidden="true" />
@@ -52,7 +88,18 @@ export default function ChatFlutuante() {
             </button>
           </header>
 
-          {amigoAtual ? (
+          {conversaTime && anel ? (
+            <div className="min-h-0 flex-1">
+              <Conversa
+                key={anel}
+                caminho={['times', anel, 'mensagens']}
+                titulo={`Chat do Time ${ring.label}`}
+                subtitulo="Só protetores deste elemento participam"
+                usuarioUid={usuario.uid}
+                compacto
+              />
+            </div>
+          ) : amigoAtual ? (
             <div className="min-h-0 flex-1">
               <Conversa
                 key={amigoAtual.uid}
@@ -66,6 +113,27 @@ export default function ChatFlutuante() {
             </div>
           ) : (
             <div className="flex-1 overflow-y-auto p-2">
+              {/* Chat do time: o elemento do anel favorito */}
+              <button
+                type="button"
+                onClick={abrirTime}
+                className="mb-1 flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-foreground/5"
+              >
+                <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lg text-white dark:text-slate-950 ${ring.bg}`}>
+                  <RingIcon aria-hidden="true" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-bold text-foreground">Time {ring.label}</span>
+                  <span className="block truncate text-xs text-foreground-muted">Chat do seu elemento</span>
+                </span>
+              </button>
+
+              <div className="my-2 flex items-center gap-3 px-1 text-[11px] font-bold uppercase tracking-wider text-foreground-muted">
+                <span className="h-px flex-1 bg-border" />
+                Amigos
+                <span className="h-px flex-1 bg-border" />
+              </div>
+
               {pedidos > 0 && (
                 <Link
                   href="/amigos"
@@ -78,7 +146,7 @@ export default function ChatFlutuante() {
               )}
 
               {amigos.length === 0 ? (
-                <div className="flex h-full flex-col items-center justify-center px-6 text-center">
+                <div className="flex flex-col items-center justify-center px-6 py-10 text-center">
                   <FaComments aria-hidden="true" className="text-3xl text-primary/40" />
                   <p className="mt-3 font-bold text-foreground">Nenhum amigo ainda</p>
                   <p className="mt-1 text-sm text-foreground-muted">Adicione protetores para conversar em particular.</p>
@@ -96,7 +164,10 @@ export default function ChatFlutuante() {
                     <li key={amigo.uid}>
                       <button
                         type="button"
-                        onClick={() => setConversaCom(amigo.uid)}
+                        onClick={() => {
+                          setConversaTime(false);
+                          setConversaCom(amigo.uid);
+                        }}
                         className="flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-foreground/5"
                       >
                         <Avatar nome={amigo.perfil?.nome} anel={amigo.perfil?.anel} fotoId={amigo.perfil?.avatarId} />
@@ -118,7 +189,7 @@ export default function ChatFlutuante() {
       <button
         type="button"
         onClick={() => setChatAberto(!chatAberto)}
-        aria-label={chatAberto ? 'Fechar conversas' : 'Abrir conversas com amigos'}
+        aria-label={chatAberto ? 'Fechar conversas' : 'Abrir conversas'}
         aria-expanded={chatAberto}
         className="fixed bottom-6 right-4 z-[70] flex h-14 w-14 cursor-pointer items-center justify-center rounded-full bg-primary-dark text-xl text-white shadow-xl shadow-primary/30 transition hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:right-6 dark:text-slate-950"
       >

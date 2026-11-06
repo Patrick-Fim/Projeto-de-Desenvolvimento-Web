@@ -21,6 +21,7 @@ export function AmigosProvider({ children }) {
   const [perfis, setPerfis] = useState({});
   const [chatAberto, setChatAberto] = useState(false);
   const [conversaCom, setConversaCom] = useState(null);
+  const [conversaTime, setConversaTime] = useState(false);
 
   // Escuta as amizades em que o usuário aparece.
   useEffect(() => {
@@ -67,7 +68,15 @@ export function AmigosProvider({ children }) {
   );
 
   const abrirConversa = useCallback((uid) => {
+    setConversaTime(false);
     setConversaCom(uid);
+    setChatAberto(true);
+  }, []);
+
+  // Abre o chat do time (anel favorito) dentro do balão de conversas.
+  const abrirTime = useCallback(() => {
+    setConversaCom(null);
+    setConversaTime(true);
     setChatAberto(true);
   }, []);
 
@@ -83,7 +92,10 @@ export function AmigosProvider({ children }) {
     setChatAberto,
     conversaCom,
     setConversaCom,
+    conversaTime,
+    setConversaTime,
     abrirConversa,
+    abrirTime,
   };
 
   return <AmigosContext.Provider value={valor}>{children}</AmigosContext.Provider>;
