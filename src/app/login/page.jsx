@@ -129,9 +129,11 @@ export default function LoginPage() {
         definirNomePendente(nome);
         const credencial = await createUserWithEmailAndPassword(auth, email, campos.senha);
         await updateProfile(credencial.user, { displayName: nome });
-      } else {
-        await signInWithEmailAndPassword(auth, email, campos.senha);
+        // Conta nova: leva direto para a personalização do perfil.
+        router.replace('/perfil?novo=1');
+        return;
       }
+      await signInWithEmailAndPassword(auth, email, campos.senha);
       router.replace(destinoSeguro());
     } catch (err) {
       definirNomePendente('');
