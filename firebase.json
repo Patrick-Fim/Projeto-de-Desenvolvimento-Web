@@ -1,8 +1,13 @@
 {
   "hosting": {
+    "site": "protetores-da-terra",
     "public": "out",
     "cleanUrls": true,
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ]
   },
   "firestore": {
     "rules": "firestore.rules"
