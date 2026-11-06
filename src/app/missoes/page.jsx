@@ -70,6 +70,26 @@ export default function MissoesPage() {
     carregarMissoes();
   }, []);
 
+  // Missão recém-criada (vinda da celebração do formulário), mostrada em destaque.
+  const [novaId, setNovaId] = useState(null);
+
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('nova');
+    if (!id) return;
+    setNovaId(id);
+    // Limpa a URL para o destaque não repetir ao recarregar a página.
+    window.history.replaceState(null, '', '/missoes');
+  }, []);
+
+  useEffect(() => {
+    if (loading || !novaId) return;
+    const cartao = document.getElementById(`missao-${novaId}`);
+    cartao?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    mostrarToast('success', 'Sua missão já está no painel!');
+    const apagar = setTimeout(() => setNovaId(null), 6000);
+    return () => clearTimeout(apagar);
+  }, [loading, novaId]);
+
   const handleDeleteMission = async (id) => {
     try {
       // Exclui a ocorrência (só o criador pode) e atualiza a lista após a resposta da API.
@@ -240,6 +260,7 @@ export default function MissoesPage() {
                   key={mission.id}
                   mission={mission}
                   estadoUsuario={estadoDe(mission)}
+                  destaque={mission.id === novaId}
                   onSelectMission={(m) => {
                     setSelectedMission(m);
                     setConfirmingDelete(false);

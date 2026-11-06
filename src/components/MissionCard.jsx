@@ -9,7 +9,7 @@ const SELOS_USUARIO = {
   criada: { texto: 'Sua denúncia', Icon: FaUserPen, classe: 'bg-ring-wind/10 text-ring-wind' },
 };
 
-export default function MissionCard({ mission, onSelectMission, estadoUsuario }) {
+export default function MissionCard({ mission, onSelectMission, estadoUsuario, destaque = false }) {
   const { title, description, ring = 'terra', location, status = 'Ativa', participants = 0, creatorName } = mission;
   const currentRing = getRing(ring);
   const RingIcon = currentRing.Icon;
@@ -17,7 +17,12 @@ export default function MissionCard({ mission, onSelectMission, estadoUsuario })
   const selo = SELOS_USUARIO[estadoUsuario];
 
   return (
-    <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/10">
+    <article
+      id={`missao-${mission.id}`}
+      className={`group relative flex scroll-mt-24 flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/10 ${
+        destaque ? `ring-4 ring-offset-4 ring-offset-background shadow-2xl animate-destaque ${currentRing.realce}` : ''
+      }`}
+    >
       {/* Faixa com a cor do anel */}
       <span className={`h-1.5 w-full ${currentRing.bg}`} aria-hidden="true" />
 
@@ -28,8 +33,15 @@ export default function MissionCard({ mission, onSelectMission, estadoUsuario })
             <RingIcon aria-hidden="true" />
             {currentRing.label}
           </span>
-          <span className={`rounded-full border px-2.5 py-1 text-xs font-bold ${statusClass}`}>
-            {status}
+          <span className="flex items-center gap-1.5">
+            {destaque && (
+              <span className="rounded-full bg-amber-400 px-2.5 py-1 text-xs font-black uppercase text-amber-950 animate-pulse">
+                Nova
+              </span>
+            )}
+            <span className={`rounded-full border px-2.5 py-1 text-xs font-bold ${statusClass}`}>
+              {status}
+            </span>
           </span>
         </div>
 

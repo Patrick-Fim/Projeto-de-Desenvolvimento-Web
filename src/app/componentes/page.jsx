@@ -5,6 +5,8 @@ import Button from '../../components/Button';
 import MissionCard from '../../components/MissionCard';
 import Modal from '../../components/Modal';
 import PageHeader from '../../components/PageHeader';
+import CelebracaoAnel from '../../components/CelebracaoAnel';
+import { RINGS } from '../../lib/rings';
 
 // Dados mockados para testar os cards
 const mockMissions = [
@@ -42,6 +44,8 @@ export default function ComponentesPage() {
   const [selectedMission, setSelectedMission] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  // Anel da celebração em demonstração (null = nenhuma).
+  const [anelCelebracao, setAnelCelebracao] = useState(null);
 
   const handleOpenModal = (mission) => {
     // Guarda a missão escolhida antes de abrir seus detalhes.
@@ -137,6 +141,40 @@ export default function ComponentesPage() {
           Abrir Modal Manualmente
         </Button>
       </section>
+
+      {/* Teste 4: Celebração de missão criada */}
+      <section className="space-y-4 bg-card p-6 rounded-2xl border border-border shadow-sm">
+        <h2 className="text-2xl font-bold text-foreground">4. Componente CelebracaoAnel (`src/components/CelebracaoAnel.jsx`)</h2>
+        <p className="text-sm text-foreground-muted">
+          Animação exibida ao registrar uma denúncia: cada anel tem partículas e movimento próprios.
+        </p>
+        <div className="flex flex-wrap gap-3 pt-2">
+          {RINGS.map((ring) => {
+            const Icon = ring.Icon;
+            return (
+              <button
+                key={ring.id}
+                type="button"
+                onClick={() => setAnelCelebracao(ring.id)}
+                className={`inline-flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:brightness-110 dark:text-slate-950 ${ring.bg}`}
+              >
+                <Icon aria-hidden="true" />
+                {ring.label}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {anelCelebracao && (
+        <CelebracaoAnel
+          key={anelCelebracao}
+          anel={anelCelebracao}
+          titulo="Missão de demonstração"
+          xp={20}
+          onFim={() => setAnelCelebracao(null)}
+        />
+      )}
 
       {/* Modal Reutilizável Renderizado */}
       <Modal

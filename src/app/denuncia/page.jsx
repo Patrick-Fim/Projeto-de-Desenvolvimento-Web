@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
+import CelebracaoAnel from '../../components/CelebracaoAnel';
 import { XP } from '../../lib/gamificacao';
 import Button from '../../components/Button';
 import PageHeader from '../../components/PageHeader';
@@ -59,7 +61,10 @@ function Campo({ id, label, error, children }) {
 }
 
 export default function DenunciaPage() {
+  const router = useRouter();
   const { usuario, perfil, carregando, chamarApi, setPerfil } = useAuth();
+  // Dados da missão recém-criada, usados pela animação de celebração.
+  const [celebracao, setCelebracao] = useState(null);
 
   // Valores controlados dos campos do formulário.
   const [formData, setFormData] = useState(ESTADO_INICIAL);
@@ -151,6 +156,13 @@ export default function DenunciaPage() {
       const resposta = await chamarApi('/api/missoes', { method: 'POST', body: formData });
       setPerfil(resposta.perfil);
 
+      // Comemora com a animação do anel e depois leva ao painel, destacando a missão nova.
+      setCelebracao({
+        id: resposta.missao.id,
+        anel: formData.ring,
+        titulo: formData.title,
+        xp: resposta.xpGanho,
+      });
       setSuccessMessage(
         `Sua denúncia foi registrada com sucesso e enviada para o painel de missões! +${resposta.xpGanho} XP`
       );
@@ -415,6 +427,15 @@ export default function DenunciaPage() {
           </div>
         </aside>
       </div>
+
+      {celebracao && (
+        <CelebracaoAnel
+          anel={celebracao.anel}
+          titulo={celebracao.titulo}
+          xp={celebracao.xp}
+          onFim={() => router.push(`/missoes?nova=${celebracao.id}`)}
+        />
+      )}
     </main>
   );
 }

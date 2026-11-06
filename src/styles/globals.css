@@ -63,6 +63,66 @@ h1, h2, h3, h4, .font-display {
 }
 .animate-chama { animation: chama 1.2s ease-in-out infinite; transform-origin: 50% 90%; }
 
+/* 6. Celebração ao criar missão: cada anel tem seu movimento de partículas.
+   Cada partícula recebe --dur, --delay, --drift (desvio lateral) e --rot (giro). */
+.particula {
+  position: absolute;
+  will-change: transform, opacity;
+  animation-duration: var(--dur);
+  animation-delay: var(--delay);
+  animation-fill-mode: both;
+}
+
+/* Coração: sobe balançando de um lado para o outro. */
+@keyframes subir {
+  0% { transform: translate3d(0, 0, 0) rotate(0deg) scale(0.6); opacity: 0; }
+  10% { opacity: 1; }
+  50% { transform: translate3d(calc(var(--drift) * -1), -60vh, 0) rotate(calc(var(--rot) * 0.15)) scale(1); }
+  100% { transform: translate3d(var(--drift), -125vh, 0) rotate(calc(var(--rot) * 0.3)) scale(1.15); opacity: 0; }
+}
+
+/* Fogo: sobe esticando e encolhendo, como uma chama. */
+@keyframes labareda {
+  0% { transform: translate3d(0, 0, 0) scale(0.4); opacity: 0; }
+  15% { opacity: 1; }
+  30% { transform: translate3d(calc(var(--drift) * 0.3), -20vh, 0) scale(1.2, 1.45); }
+  60% { transform: translate3d(calc(var(--drift) * -0.4), -50vh, 0) scale(0.9, 1.15); }
+  100% { transform: translate3d(var(--drift), -85vh, 0) scale(0.3); opacity: 0; }
+}
+
+/* Terra: folhas caindo em zigue-zague e girando. */
+@keyframes folha {
+  0% { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 0; }
+  10% { opacity: 1; }
+  25% { transform: translate3d(var(--drift), 30vh, 0) rotate(calc(var(--rot) * 0.3)); }
+  50% { transform: translate3d(calc(var(--drift) * -1), 60vh, 0) rotate(calc(var(--rot) * -0.2)); }
+  75% { transform: translate3d(var(--drift), 90vh, 0) rotate(calc(var(--rot) * 0.6)); }
+  100% { transform: translate3d(0, 125vh, 0) rotate(var(--rot)); opacity: 0; }
+}
+
+/* Água: gotas caindo rápido, esticando com a velocidade. */
+@keyframes gota {
+  0% { transform: translate3d(0, 0, 0) scaleY(0.8); opacity: 0; }
+  10% { opacity: 1; }
+  100% { transform: translate3d(var(--drift), 125vh, 0) scaleY(1.35); opacity: 0.2; }
+}
+
+/* Vento: rajadas cruzando a tela da esquerda para a direita. */
+@keyframes rajada {
+  0% { transform: translate3d(0, 0, 0) scaleX(0.6); opacity: 0; }
+  15% { opacity: 1; }
+  50% { transform: translate3d(60vw, var(--drift), 0) scaleX(1.3); }
+  100% { transform: translate3d(125vw, calc(var(--drift) * -1), 0) scaleX(0.8); opacity: 0; }
+}
+
+/* Missão recém-criada aparecendo em destaque no painel. */
+@keyframes destaque {
+  0% { transform: scale(0.92); opacity: 0; }
+  60% { transform: scale(1.03); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.animate-destaque { animation: destaque 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+
 /* Barra de XP crescendo ao carregar. */
 @keyframes encher {
   from { transform: scaleX(0); }
