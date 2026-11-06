@@ -19,7 +19,7 @@ import {
 import { useAuth } from '../../../context/AuthContext';
 import { getRing, STATUS_STYLES } from '../../../lib/rings';
 import { XP, nivelDe } from '../../../lib/gamificacao';
-import { ehMembro } from '../../../lib/missoes';
+import { ehMembro, totalProtetores } from '../../../lib/missoes';
 import Button from '../../../components/Button';
 import Avatar from '../../../components/Avatar';
 import ChatMissao from '../../../components/ChatMissao';
@@ -183,7 +183,7 @@ export default function MissaoPage() {
           <div className="mt-6 flex flex-col gap-4 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm font-semibold text-foreground-muted">
               <span className="flex items-center gap-1.5"><FaLocationDot aria-hidden="true" className="text-primary-text" /> {missao.location}</span>
-              <span className="flex items-center gap-1.5"><FaUsers aria-hidden="true" className="text-primary-text" /> {missao.participants || 0} engajados</span>
+              <span className="flex items-center gap-1.5"><FaUsers aria-hidden="true" className="text-primary-text" /> {totalProtetores(missao)} {totalProtetores(missao) === 1 ? 'protetor' : 'protetores'}</span>
               <span className="flex items-center gap-1.5"><FaFlagCheckered aria-hidden="true" className="text-accent-text" /> {(missao.concluidoPor || []).length} concluíram</span>
             </div>
 
