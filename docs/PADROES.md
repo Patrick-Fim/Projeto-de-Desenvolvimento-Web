@@ -91,6 +91,10 @@ Opacidade: use o modificador do Tailwind (`bg-primary/10`, `border-accent/30`).
 | `Campo` | Rótulo + campo + erro/dica de todo formulário. Exporta também `classeCampo(temErro)` e `a11yCampo(id, erro)` | `id`, `label`, `error`, `obrigatorio`, `dica` |
 | `SeletorImagem` | Escolher/trocar/remover imagem com pré-visualização e compressão automática | `id`, `rotulo`, `formato` (`avatar`, `banner`, `capa`), `valor`, `onChange`, `dica` |
 | `ImagemSalva` | Mostra uma imagem salva no Firestore pelo id (com cache e espaço reservado ao carregar) | `id`, `alt`, `className` |
+| `Conversa` | Chat em tempo real genérico (missão, time e privado), com imagens | `caminho` (ex.: `['missoes', id, 'mensagens']`), `titulo`, `subtitulo`, `podeParticipar`, `usuarioUid`, `fotosMembros`, `acaoBloqueado`, `compacto` |
+| `ChatFlutuante` | Balão no canto inferior direito com as conversas privadas entre amigos (montado no layout) | — |
+| `BotaoAmizade` | Adicionar / pedido enviado / aceitar / conversar com outro protetor | `uid`, `nome`, `compacto` |
+| `CampoBusca` | Campo de busca com lupa | `id`, `value`, `onChange`, `placeholder`, `rotulo` |
 | `SeloPrazo` | Data limite da missão: "Faltam X dias", "Termina hoje", "Prazo encerrado" | `prazo` (AAAA-MM-DD), `completo` |
 | `Foguinho` | Dias seguidos de acesso | `dias`, `grande` |
 | `Logo` | Marca (cabeçalho e rodapé) | — |
@@ -99,7 +103,6 @@ Opacidade: use o modificador do Tailwind (`bg-primary/10`, `border-accent/30`).
 | `AvisoConquista` | Cartão "Conquista desbloqueada!" no canto inferior direito, com confetes (`canvas-confetti`) | `conquista`, `onFechar` |
 | `NotificadorConquistas` | Montado no layout: detecta conquistas novas no perfil e mostra uma de cada vez (lembra as já comemoradas no `localStorage`) | — |
 | `BolhaMensagem` | Uma mensagem do chat (texto, foto com/sem legenda, apagada). Foto tem largura fixa, estilo WhatsApp | `mensagem`, `minha`, `agrupada`, `onAbrirImagem`, `onImagemCarregada`, `acoes` |
-| `ChatMissao` | Chat em tempo real da missão, com envio de imagens | `missaoId`, `podeParticipar`, `usuarioUid`, `chamarApi`, `totalMembros`, `acaoBloqueado` |
 | `ScrollToTop` | Botão "voltar ao topo" | — |
 
 Padrões visuais recorrentes: cartões `rounded-2xl border border-border bg-card shadow-sm`,
@@ -134,10 +137,24 @@ prontas `bg`, `text`, `border`, `soft`. `STATUS_STYLES` define as cores dos stat
 | `criarMissao(form, capa, perfil)` | `POST` | registra a denúncia (+20 XP) | logado |
 | `editarMissao(id, campos, atual)` | `PATCH` | edita título, anel, local, prazo, descrição, capa | só o dono |
 | `excluirMissao(id, atual)` | `DELETE` | exclui (devolve o XP da criação) | só o dono |
+| `encerrarMissao(id, atual)` | `PATCH` | o líder encerra (status `Concluída`, +30 XP) | só o dono |
 
 - O resto usa o SDK do Firebase: `checkin`, `editarPerfil`, `acaoMissao` (engajar/concluir), `ranking`,
   `estatisticas`, `enviarMensagem`, `apagarMensagem`, `enviarImagem`, `carregarImagem`.
 - Erros sempre como `Error` com mensagem em português para mostrar ao usuário.
+
+### Social, times e rankings
+
+- **Amigos**: coleção `amizades`, id = os dois uids em ordem separados por `_` (`idPar`). Status `pendente` → `aceita`.
+  O `AmigosContext` escuta as amizades em tempo real e controla o balão (`abrirConversa(uid)`).
+- **Conversa privada**: `conversas/{par}/mensagens`, só entre amigos aceitos.
+- **Time**: `times/{anel}/mensagens`; o time é o anel favorito do perfil (página `/time`).
+- **Rankings**: `ranking(periodo)` e `rankingElementos(periodo)`, com `periodo` = `semanal`, `mensal` ou `geral`.
+  O XP do período fica em `xpPorPeriodo` (chaves `chaveSemana()` / `chaveMes()` de `datas.js`) e é
+  atualizado por `aplicarXp` sempre que alguém ganha ou perde XP. O ranking dos elementos soma no navegador
+  (sem índices compostos).
+- **Missão encerrada**: `status: 'Concluída'` (`missaoConcluida`); `aceitaProtetores` diz se ainda dá para entrar
+  (não encerrada e dentro do prazo). O painel separa as abas Ativas e Concluídas.
 
 ### Regras de segurança (`firestore.rules`)
 
@@ -149,8 +166,12 @@ Como não há servidor, **a segurança está nas regras**. Ao criar um campo ou 
 - `missoes/{id}/contatos`: e-mail de quem denunciou — só o dono lê.
 - `missoes/{id}/mensagens`: só membros (criador + participantes) leem e escrevem.
 - `imagens`: leitura pública; cada um só cria/apaga as próprias.
+- `amizades`: só os dois envolvidos leem; quem pede cria como pendente; só quem recebeu aceita.
+- `conversas/{par}/mensagens`: só os dois amigos (amizade aceita).
+- `times/{anel}/mensagens`: só quem tem aquele anel no perfil.
 
-Coleções: `missoes` (subcoleções `mensagens` e `contatos`), `usuarios` e `imagens`.
+Coleções: `missoes` (subcoleções `mensagens` e `contatos`), `usuarios`, `imagens`, `amizades`,
+`conversas` (subcoleção `mensagens`) e `times` (subcoleção `mensagens`).
 
 ### Chat da missão
 

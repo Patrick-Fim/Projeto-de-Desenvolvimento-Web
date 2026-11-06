@@ -17,12 +17,14 @@ import {
   FaCrown,
   FaPenToSquare,
   FaCalendarXmark,
+  FaFlagCheckered as FaBandeira,
 } from 'react-icons/fa6';
 import { useAuth } from '../../context/AuthContext';
 import { RINGS, getRing, STATUS_STYLES } from '../../lib/rings';
 import { XP, nivelDe } from '../../lib/gamificacao';
-import { ehMembro, totalProtetores, infoPrazo, validarCamposMissao } from '../../lib/missoes';
-import { obterMissao, editarMissao, excluirMissao, acaoMissao } from '../../lib/servicos';
+import { ehMembro, totalProtetores, validarCamposMissao, aceitaProtetores, missaoConcluida } from '../../lib/missoes';
+import { obterMissao, editarMissao, excluirMissao, acaoMissao, encerrarMissao } from '../../lib/servicos';
+import BotaoAmizade from '../../components/BotaoAmizade';
 import ImagemSalva from '../../components/ImagemSalva';
 import { hoje } from '../../lib/datas';
 import Button from '../../components/Button';
@@ -31,7 +33,7 @@ import Modal from '../../components/Modal';
 import Campo, { classeCampo, a11yCampo } from '../../components/Campo';
 import SeletorImagem from '../../components/SeletorImagem';
 import SeloPrazo from '../../components/SeloPrazo';
-import ChatMissao from '../../components/ChatMissao';
+import Conversa from '../../components/Conversa';
 
 // Formulário de edição da missão (só o criador vê). Usa os mesmos campos e regras da criação.
 function FormEditarMissao({ missao, onSalvar, onCancelar }) {
@@ -147,6 +149,7 @@ export default function MissaoPage() {
   const [salvando, setSalvando] = useState(false);
   const [confirmandoExclusao, setConfirmandoExclusao] = useState(false);
   const [editando, setEditando] = useState(false);
+  const [confirmandoEncerrar, setConfirmandoEncerrar] = useState(false);
   const [toast, setToast] = useState(null);
 
   const mostrarToast = (type, text) => {
@@ -196,6 +199,22 @@ export default function MissaoPage() {
     }
   };
 
+  // O líder encerra a missão: ela vai para a lista de concluídas e ele ganha XP.
+  const encerrar = async () => {
+    try {
+      setSalvando(true);
+      const resposta = await encerrarMissao(id, dados.missao);
+      setPerfil(resposta.perfil);
+      await carregar();
+      setConfirmandoEncerrar(false);
+      mostrarToast('success', `Missão encerrada! Ela agora está em Concluídas. +${resposta.xpGanho} XP`);
+    } catch (err) {
+      mostrarToast('error', err.message);
+    } finally {
+      setSalvando(false);
+    }
+  };
+
   const excluir = async () => {
     try {
       setSalvando(true);
@@ -237,7 +256,8 @@ export default function MissaoPage() {
   const ehCriador = usuario?.uid === missao.creatorUid;
   const membro = ehMembro(missao, usuario?.uid);
   const concluiu = (missao.concluidoPor || []).includes(usuario?.uid);
-  const encerrada = infoPrazo(missao.prazo)?.encerrada;
+  const encerrada = !aceitaProtetores(missao);
+  const concluidaPeloLider = missaoConcluida(missao);
   const fotosMembros = Object.fromEntries(membros.map((m) => [m.uid, m.avatarId]));
 
   // Salva a edição: envia a capa nova (se houver) e os campos pelo PATCH da API REST.
@@ -262,7 +282,7 @@ export default function MissaoPage() {
   } else if (!membro && encerrada) {
     acaoPrincipal = (
       <span className="inline-flex items-center gap-2 rounded-xl bg-foreground/5 px-4 py-2.5 text-sm font-bold text-foreground-muted">
-        <FaCalendarXmark aria-hidden="true" /> Prazo encerrado: não aceita novos protetores
+        <FaCalendarXmark aria-hidden="true" /> {concluidaPeloLider ? 'Missão encerrada pelo líder' : 'Prazo encerrado'}: não aceita novos protetores
       </span>
     );
   } else if (!membro) {
@@ -310,9 +330,23 @@ export default function MissaoPage() {
               <SeloPrazo prazo={missao.prazo} completo />
             </div>
             {ehCriador && (
-              <Button variant="outline" size="sm" onClick={() => setEditando(true)}>
-                <FaPenToSquare aria-hidden="true" /> Editar missão
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                {!concluidaPeloLider &&
+                  (confirmandoEncerrar ? (
+                    <span className="flex flex-wrap items-center gap-2 rounded-xl bg-accent/10 px-3 py-2 text-sm">
+                      <span className="font-semibold text-accent-text">Encerrar e mover para Concluídas?</span>
+                      <Button variant="ecological" size="sm" disabled={salvando} onClick={encerrar}>Sim, encerrar</Button>
+                      <Button variant="ghost" size="sm" onClick={() => setConfirmandoEncerrar(false)}>Cancelar</Button>
+                    </span>
+                  ) : (
+                    <Button variant="ecological" size="sm" onClick={() => setConfirmandoEncerrar(true)}>
+                      <FaBandeira aria-hidden="true" /> Encerrar missão (+{XP.encerrarMissao} XP)
+                    </Button>
+                  ))}
+                <Button variant="outline" size="sm" onClick={() => setEditando(true)}>
+                  <FaPenToSquare aria-hidden="true" /> Editar missão
+                </Button>
+              </div>
             )}
           </div>
 
@@ -352,11 +386,13 @@ export default function MissaoPage() {
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         {/* Chat */}
-        <ChatMissao
-          missaoId={id}
+        <Conversa
+          caminho={['missoes', id, 'mensagens']}
+          titulo="Conversa da missão"
+          textoBloqueado="Entre na missão para ver as mensagens, combinar a ação e trocar fotos com os outros protetores."
           podeParticipar={membro}
           usuarioUid={usuario?.uid}
-          totalMembros={membros.length}
+          subtitulo={`${membros.length} ${membros.length === 1 ? 'protetor' : 'protetores'} na missão`}
           fotosMembros={fotosMembros}
           acaoBloqueado={acaoPrincipal}
         />
@@ -382,10 +418,11 @@ export default function MissaoPage() {
                     <p className="text-xs text-foreground-muted">Nível {nivelDe(m.xp).numero} · {nivelDe(m.xp).nome}</p>
                   </div>
                   {m.papel === 'criador' && (
-                    <span title="Criador da missão" className="flex items-center gap-1 rounded-full bg-amber-400/20 px-2 py-0.5 text-xs font-bold text-amber-800 dark:text-amber-300">
-                      <FaCrown aria-hidden="true" /> Criador
+                    <span title="Líder da missão" className="flex items-center gap-1 rounded-full bg-amber-400/20 px-2 py-0.5 text-xs font-bold text-amber-800 dark:text-amber-300">
+                      <FaCrown aria-hidden="true" /> Líder
                     </span>
                   )}
+                  <BotaoAmizade uid={m.uid} nome={m.nome} compacto />
                 </li>
               ))}
             </ul>
@@ -405,7 +442,7 @@ export default function MissaoPage() {
         <div
           role="status"
           aria-live="polite"
-          className={`fixed bottom-6 left-1/2 z-[60] flex w-[calc(100%-2rem)] max-w-md -translate-x-1/2 items-center gap-3 rounded-2xl px-5 py-4 shadow-2xl animate-fadeIn ${
+          className={`fixed bottom-24 left-1/2 z-[60] flex w-[calc(100%-2rem)] max-w-md -translate-x-1/2 items-center gap-3 rounded-2xl px-5 py-4 shadow-2xl animate-fadeIn ${
             toast.type === 'error' ? 'bg-ring-fire text-white' : 'bg-accent-text text-white dark:text-slate-950'
           }`}
         >

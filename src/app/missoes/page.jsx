@@ -8,7 +8,7 @@ import Button from '../../components/Button';
 import PageHeader from '../../components/PageHeader';
 import { RINGS, getRing } from '../../lib/rings';
 import { XP, nivelDe } from '../../lib/gamificacao';
-import { totalProtetores, infoPrazo } from '../../lib/missoes';
+import { totalProtetores, aceitaProtetores, missaoConcluida } from '../../lib/missoes';
 import SeloPrazo from '../../components/SeloPrazo';
 import { useAuth } from '../../context/AuthContext';
 import { listarMissoes, excluirMissao, acaoMissao } from '../../lib/servicos';
@@ -43,6 +43,8 @@ export default function MissoesPage() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRing, setSelectedRing] = useState('todos');
+  // Aba: missões ativas ou já encerradas pelo líder.
+  const [aba, setAba] = useState('ativas');
 
   const [selectedMission, setSelectedMission] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -156,7 +158,9 @@ export default function MissoesPage() {
 
     const matchesRing = selectedRing === 'todos' || (m.ring || '').toLowerCase() === selectedRing;
 
-    return matchesSearch && matchesRing;
+    const matchesAba = aba === 'concluidas' ? missaoConcluida(m) : !missaoConcluida(m);
+
+    return matchesSearch && matchesRing && matchesAba;
   });
 
   const ringModal = selectedMission ? getRing(selectedMission.ring) : null;
@@ -171,6 +175,27 @@ export default function MissoesPage() {
       />
 
       <div className="mx-auto max-w-6xl space-y-8 px-6 py-10">
+        {/* Abas: ativas x concluídas */}
+        <div className="inline-flex rounded-xl border border-border bg-card p-1" role="group" aria-label="Situação das missões">
+          {[
+            { id: 'ativas', rotulo: 'Ativas', total: missoes.filter((m) => !missaoConcluida(m)).length },
+            { id: 'concluidas', rotulo: 'Concluídas', total: missoes.filter(missaoConcluida).length },
+          ].map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setAba(item.id)}
+              aria-pressed={aba === item.id}
+              className={`inline-flex cursor-pointer items-center gap-2 rounded-lg px-5 py-2 text-sm font-bold transition ${
+                aba === item.id ? 'bg-primary-dark text-white shadow-sm dark:text-slate-950' : 'text-foreground-muted hover:text-foreground'
+              }`}
+            >
+              {item.rotulo}
+              <span className="rounded-full bg-foreground/10 px-2 text-xs">{item.total}</span>
+            </button>
+          ))}
+        </div>
+
         {/* Barra de Filtros e Busca */}
         <section aria-label="Filtros de ocorrências" className="space-y-4 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -286,7 +311,7 @@ export default function MissoesPage() {
         <div
           role="status"
           aria-live="polite"
-          className={`fixed bottom-6 left-1/2 z-[60] flex w-[calc(100%-2rem)] max-w-md -translate-x-1/2 items-center gap-3 rounded-2xl px-5 py-4 shadow-2xl animate-fadeIn ${
+          className={`fixed bottom-24 left-1/2 z-[60] flex w-[calc(100%-2rem)] max-w-md -translate-x-1/2 items-center gap-3 rounded-2xl px-5 py-4 shadow-2xl animate-fadeIn ${
             toast.type === 'error' ? 'bg-ring-fire text-white' : 'bg-accent-text text-white dark:text-slate-950'
           }`}
         >
@@ -406,9 +431,9 @@ export default function MissoesPage() {
                   )}
 
                   {usuario && estadoDe(selectedMission) === null && (
-                    infoPrazo(selectedMission.prazo)?.encerrada ? (
+                    !aceitaProtetores(selectedMission) ? (
                       <span className="inline-flex items-center gap-2 rounded-lg bg-foreground/5 px-3.5 py-2 text-sm font-bold text-foreground-muted">
-                        Prazo encerrado
+                        Não aceita novos protetores
                       </span>
                     ) : (
                       <Button variant="ecological" size="sm" disabled={acaoEmAndamento} onClick={() => handleAcaoMissao('engajar')}>

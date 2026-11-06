@@ -8,6 +8,7 @@ import {
   deleteDoc,
   doc,
   getCountFromServer,
+  where,
   getDoc,
   getDocs,
   limit,
@@ -21,9 +22,10 @@ import { db } from './firebase';
 import { auth } from './firebaseAuth';
 import * as rest from './firestoreRest';
 import { XP } from './gamificacao';
-import { hoje, diaAnterior } from './datas';
+import { hoje, diaAnterior, chaveSemana, chaveMes } from './datas';
 import { perfilNovo, perfilProprio, perfilPublico } from './perfis';
-import { infoPrazo, validarCamposMissao, CHAT, ANEIS_IDS } from './missoes';
+import { validarCamposMissao, aceitaProtetores, CHAT, ANEIS_IDS } from './missoes';
+import { RINGS } from './rings';
 import { FORMATOS_IMAGEM, FORMATO_DATA_URL } from './imagens';
 
 const refUsuario = (uid) => doc(db, 'usuarios', uid);
@@ -36,6 +38,36 @@ function usuarioAtual() {
 
 // Padroniza listas que podem faltar em missões antigas.
 const missaoComListas = (m) => ({ ...m, participantIds: m.participantIds || [], concluidoPor: m.concluidoPor || [] });
+
+// ============================ XP ============================
+
+// Aplica um ganho (ou perda) de XP no total e nos períodos atuais (semana e mês),
+// usados pelo ranking semanal e mensal. Só guarda os períodos atuais.
+function aplicarXp(perfil, delta) {
+  const atuais = [chaveSemana(), chaveMes()];
+  const anterior = perfil.xpPorPeriodo || {};
+  const xpPorPeriodo = Object.fromEntries(atuais.map((k) => [k, Math.max(0, (anterior[k] || 0) + delta)]));
+  return { xp: Math.max(0, (perfil.xp || 0) + delta), xpPorPeriodo };
+}
+
+// Campo usado para ordenar cada ranking.
+export const PERIODOS_RANKING = [
+  { id: 'semanal', rotulo: 'Semanal' },
+  { id: 'mensal', rotulo: 'Mensal' },
+  { id: 'geral', rotulo: 'Geral' },
+];
+
+function campoDoPeriodo(periodo) {
+  if (periodo === 'semanal') return `xpPorPeriodo.${chaveSemana()}`;
+  if (periodo === 'mensal') return `xpPorPeriodo.${chaveMes()}`;
+  return 'xp';
+}
+
+function xpDoPeriodo(dados, periodo) {
+  if (periodo === 'semanal') return dados.xpPorPeriodo?.[chaveSemana()] || 0;
+  if (periodo === 'mensal') return dados.xpPorPeriodo?.[chaveMes()] || 0;
+  return dados.xp || 0;
+}
 
 // ============================ Perfil ============================
 
@@ -69,7 +101,7 @@ export async function checkin(nomeInformado = '') {
       perfil.sequencia = perfil.ultimoAcesso === diaAnterior(dia) ? (perfil.sequencia || 0) + 1 : 1;
       perfil.melhorSequencia = Math.max(perfil.melhorSequencia || 0, perfil.sequencia);
       perfil.ultimoAcesso = dia;
-      perfil.xp = (perfil.xp || 0) + XP.checkin;
+      Object.assign(perfil, aplicarXp(perfil, XP.checkin));
       mudou = true;
     }
 
@@ -114,19 +146,49 @@ async function somarAoPerfil(uid, deltas) {
     const perfil = { ...(await transacao.get(ref)).data() };
     const alterados = {};
     for (const [campo, delta] of Object.entries(deltas)) {
-      perfil[campo] = Math.max(0, (perfil[campo] || 0) + delta);
-      alterados[campo] = perfil[campo];
+      if (campo === 'xp') {
+        Object.assign(alterados, aplicarXp(perfil, delta));
+      } else {
+        alterados[campo] = Math.max(0, (perfil[campo] || 0) + delta);
+      }
     }
+    Object.assign(perfil, alterados);
     transacao.update(ref, alterados);
     return perfil;
   });
   return perfilProprio(uid, dados);
 }
 
-// Os 20 protetores com mais XP.
-export async function ranking() {
-  const snap = await getDocs(query(collection(db, 'usuarios'), orderBy('xp', 'desc'), limit(20)));
-  return snap.docs.map((d, i) => ({ posicao: i + 1, ...perfilPublico(d.id, d.data()) }));
+// Os 20 protetores com mais XP no período: 'semanal', 'mensal' ou 'geral'.
+export async function ranking(periodo = 'geral') {
+  const snap = await getDocs(
+    query(collection(db, 'usuarios'), orderBy(campoDoPeriodo(periodo), 'desc'), limit(20))
+  );
+  return snap.docs
+    .map((d) => ({ ...perfilPublico(d.id, d.data()), xpPeriodo: xpDoPeriodo(d.data(), periodo) }))
+    .filter((p) => periodo === 'geral' || p.xpPeriodo > 0)
+    .map((p, i) => ({ ...p, posicao: i + 1 }));
+}
+
+// Ranking dos times (anel favorito): XP somado e quantidade de protetores de cada elemento.
+// A soma é feita no navegador para não depender de índices do Firestore por período.
+export async function rankingElementos(periodo = 'geral') {
+  const snap = await getDocs(query(collection(db, 'usuarios'), limit(1000)));
+  const placar = Object.fromEntries(RINGS.map((ring) => [ring.id, { id: ring.id, xp: 0, protetores: 0 }]));
+  snap.docs.forEach((d) => {
+    const time = placar[d.data().anel] || placar.terra;
+    time.xp += xpDoPeriodo(d.data(), periodo);
+    time.protetores += 1;
+  });
+  return Object.values(placar)
+    .sort((a, b) => b.xp - a.xp)
+    .map((time, i) => ({ ...time, posicao: i + 1 }));
+}
+
+// Protetores de um time (anel), do maior para o menor XP.
+export async function membrosDoTime(anel) {
+  const snap = await getDocs(query(collection(db, 'usuarios'), where('anel', '==', anel), limit(100)));
+  return snap.docs.map((d) => perfilPublico(d.id, d.data())).sort((a, b) => b.xp - a.xp);
 }
 
 // Números reais da plataforma (página inicial).
@@ -293,6 +355,20 @@ export async function excluirMissao(id, missaoAtual) {
   return { perfil };
 }
 
+// PATCH - o líder (criador) encerra a missão: ela vai para a lista de concluídas.
+export async function encerrarMissao(id, missaoAtual) {
+  const usuario = usuarioAtual();
+  if (missaoAtual.creatorUid !== usuario.uid) throw new Error('Só o líder da missão pode encerrá-la.');
+  if (missaoAtual.status === 'Concluída') throw new Error('Esta missão já foi encerrada.');
+
+  const missao = await rest.atualizar('missoes', id, {
+    status: 'Concluída',
+    encerradaEm: new Date().toISOString(),
+  });
+  const perfil = await somarAoPerfil(usuario.uid, { xp: XP.encerrarMissao, missoesLideradas: 1 });
+  return { missao: missaoComListas(missao), perfil, xpGanho: XP.encerrarMissao };
+}
+
 // Entrar (engajar) ou concluir uma missão, com o XP correspondente.
 export async function acaoMissao(id, acao) {
   const usuario = usuarioAtual();
@@ -314,7 +390,7 @@ export async function acaoMissao(id, acao) {
 
     if (acao === 'engajar') {
       if (missao.participantIds.includes(uid)) throw new Error('Você já está engajado nesta missão.');
-      if (infoPrazo(missao.prazo)?.encerrada) throw new Error('O prazo desta missão já terminou.');
+      if (!aceitaProtetores(missao)) throw new Error('Esta missão não aceita mais novos protetores.');
       mudancaMissao = { participantIds: [...missao.participantIds, uid], participants: (missao.participants || 0) + 1 };
       xpGanho = XP.engajar;
       mudancaPerfil = { engajadas: [...(perfil.engajadas || []), id] };
@@ -329,7 +405,7 @@ export async function acaoMissao(id, acao) {
         aneisConcluidos: missao.ring && !aneis.includes(missao.ring) ? [...aneis, missao.ring] : aneis,
       };
     }
-    mudancaPerfil.xp = (perfil.xp || 0) + xpGanho;
+    Object.assign(mudancaPerfil, aplicarXp(perfil, xpGanho));
 
     transacao.update(refMissao, mudancaMissao);
     transacao.update(refPerfil, mudancaPerfil);
@@ -345,8 +421,9 @@ export async function acaoMissao(id, acao) {
 
 // ============================ Chat ============================
 
-// Envia uma mensagem (texto e/ou imagem) no chat da missão.
-export async function enviarMensagem(missaoId, { texto, imagem }, perfil) {
+// Envia uma mensagem (texto e/ou imagem) em qualquer conversa.
+// caminho: onde ficam as mensagens, ex.: ['missoes', id, 'mensagens'], ['times', 'fogo', 'mensagens'].
+export async function enviarMensagem(caminho, { texto, imagem }, perfil) {
   const usuario = usuarioAtual();
   const conteudo = String(texto || '').trim();
   if (!conteudo && !imagem) throw new Error('Escreva uma mensagem ou envie uma imagem.');
@@ -355,10 +432,11 @@ export async function enviarMensagem(missaoId, { texto, imagem }, perfil) {
     throw new Error('Imagem inválida ou grande demais.');
   }
 
-  await addDoc(collection(db, 'missoes', missaoId, 'mensagens'), {
+  await addDoc(collection(db, ...caminho), {
     autorUid: usuario.uid,
     autorNome: perfil?.nome || usuario.displayName || 'Protetor',
     autorAnel: perfil?.anel || 'terra',
+    autorAvatarId: perfil?.avatarId || null,
     texto: conteudo,
     imagem: imagem || null,
     apagada: false,
@@ -367,7 +445,61 @@ export async function enviarMensagem(missaoId, { texto, imagem }, perfil) {
 }
 
 // Apaga a própria mensagem (fica como "Mensagem apagada").
-export async function apagarMensagem(missaoId, mensagemId) {
+export async function apagarMensagem(caminho, mensagemId) {
   usuarioAtual();
-  await updateDoc(doc(db, 'missoes', missaoId, 'mensagens', mensagemId), { apagada: true, texto: '', imagem: null });
+  await updateDoc(doc(db, ...caminho, mensagemId), { apagada: true, texto: '', imagem: null });
+}
+
+// ============================ Amigos ============================
+
+// Id da amizade (e da conversa privada) entre duas pessoas: os dois uids em ordem.
+export const idPar = (a, b) => [a, b].sort().join('_');
+
+// Envia um pedido de amizade.
+export async function enviarPedidoAmizade(outroUid) {
+  const usuario = usuarioAtual();
+  if (outroUid === usuario.uid) throw new Error('Você não pode adicionar a si mesmo.');
+  const usuarios = [usuario.uid, outroUid].sort();
+  await setDoc(doc(db, 'amizades', idPar(usuario.uid, outroUid)), {
+    usuarios,
+    de: usuario.uid,
+    para: outroUid,
+    status: 'pendente',
+    criadoEm: new Date().toISOString(),
+  });
+}
+
+// Aceita um pedido recebido.
+export async function aceitarAmizade(par) {
+  usuarioAtual();
+  await updateDoc(doc(db, 'amizades', par), { status: 'aceita', aceitaEm: new Date().toISOString() });
+}
+
+// Recusa, cancela ou desfaz uma amizade.
+export async function removerAmizade(par) {
+  usuarioAtual();
+  await deleteDoc(doc(db, 'amizades', par));
+}
+
+// Perfis públicos por uid (com cache em memória).
+const cachePerfis = new Map();
+export async function carregarPerfisPublicos(uids) {
+  const faltando = [...new Set(uids)].filter((uid) => uid && !cachePerfis.has(uid));
+  await Promise.all(
+    faltando.map(async (uid) => {
+      const snap = await getDoc(refUsuario(uid));
+      if (snap.exists()) cachePerfis.set(uid, perfilPublico(uid, snap.data()));
+    })
+  );
+  return Object.fromEntries(uids.filter((uid) => cachePerfis.has(uid)).map((uid) => [uid, cachePerfis.get(uid)]));
+}
+
+// Procura protetores pelo nome (busca simples entre os perfis cadastrados).
+export async function buscarProtetores(termo) {
+  const busca = String(termo || '').trim().toLowerCase();
+  const snap = await getDocs(query(collection(db, 'usuarios'), orderBy('xp', 'desc'), limit(200)));
+  return snap.docs
+    .map((d) => perfilPublico(d.id, d.data()))
+    .filter((p) => !busca || (p.nome || '').toLowerCase().includes(busca))
+    .slice(0, 30);
 }

@@ -4,6 +4,8 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { AuthProvider } from "../context/AuthContext";
 import NotificadorConquistas from "../components/NotificadorConquistas";
+import ChatFlutuante from "../components/ChatFlutuante";
+import { AmigosProvider } from "../context/AmigosContext";
 
 // Metadados compartilhados por todas as páginas da aplicação.
 export const metadata = {
@@ -32,6 +34,7 @@ export default function RootLayout({ children }) {
 
         {/* O AuthProvider deixa o usuário logado disponível para todas as telas. */}
         <AuthProvider>
+          <AmigosProvider>
           {/* Cabeçalho e rodapé envolvem o conteúdo da rota atual. */}
           <Navbar />
           <div id="conteudo" className="flex-1">
@@ -40,6 +43,9 @@ export default function RootLayout({ children }) {
           <Footer />
           {/* Aviso animado quando o protetor desbloqueia uma conquista. */}
           <NotificadorConquistas />
+          {/* Balão de conversas privadas com amigos. */}
+          <ChatFlutuante />
+          </AmigosProvider>
         </AuthProvider>
       </body>
     </html>

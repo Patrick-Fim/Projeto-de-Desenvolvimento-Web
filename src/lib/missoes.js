@@ -10,6 +10,12 @@ export function ehMembro(missao, uid) {
   return missao.creatorUid === uid || (missao.participantIds || []).includes(uid);
 }
 
+// A missão está encerrada quando o líder a concluiu.
+export const missaoConcluida = (missao) => missao?.status === 'Concluída';
+
+// Aceita novos protetores: não foi encerrada pelo líder nem passou do prazo.
+export const aceitaProtetores = (missao) => !missaoConcluida(missao) && !infoPrazo(missao?.prazo)?.encerrada;
+
 // Total de protetores na missão: quem entrou nela + o criador (quando houver).
 export function totalProtetores(missao) {
   if (!missao) return 0;
