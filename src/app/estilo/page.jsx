@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import PageHeader from '../../components/PageHeader';
 
 export default function GuiaDeEstilosPage() {
   const [isDark, setIsDark] = useState(false);
@@ -33,19 +34,14 @@ export default function GuiaDeEstilosPage() {
   };
 
   return (
-    <main className="min-h-screen p-6 md:p-12 space-y-12 max-w-6xl mx-auto">
-      {/* Cabeçalho */}
-      <header className="border-b border-primary/20 pb-6">
-        <span className="text-xs font-semibold tracking-wider uppercase text-accent-text bg-accent/15 border border-accent/30 px-3 py-1 rounded-full">
-          ✓ Guia de Estilo Protetores da Terra
-        </span>
-        <h1 className="text-4xl md:text-5xl font-extrabold text-foreground mt-3">
-          O Poder é de Vocês!
-        </h1>
-        <p className="text-foreground-muted mt-2 max-w-2xl">
-          Página de validação dos tokens de design, tipografia (Montserrat + Inter), paleta do Capitão Planeta e Anéis Elementais.
-        </p>
-      </header>
+    <main>
+      <PageHeader
+        eyebrow="Guia de Estilo Protetores da Terra"
+        title="O Poder é de Vocês!"
+        description="Página de validação dos tokens de design, tipografia (Montserrat + Inter), paleta do Capitão Planeta e Anéis Elementais."
+      />
+
+      <div className="mx-auto max-w-6xl space-y-12 px-6 py-12">
 
       {/* Seção 1: Paleta de Cores Principais */}
       <section className="space-y-4">
@@ -197,6 +193,7 @@ export default function GuiaDeEstilosPage() {
           </div>
         </div>
       </section>
+      </div>
     </main>
   );
 }

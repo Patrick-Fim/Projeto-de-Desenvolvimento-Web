@@ -7,3 +7,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+# Padrões do projeto
+
+Antes de alterar a interface ou a API, leia `docs/PADROES.md` (tokens, componentes, anéis, gamificação, API, acessibilidade e convenções de Git). As páginas `/estilo` e `/componentes` mostram os padrões visuais funcionando.

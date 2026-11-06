@@ -4,6 +4,11 @@ import { useState } from 'react';
 import Button from '../../components/Button';
 import MissionCard from '../../components/MissionCard';
 import Modal from '../../components/Modal';
+import PageHeader from '../../components/PageHeader';
+import CelebracaoAnel from '../../components/CelebracaoAnel';
+import AvisoConquista from '../../components/AvisoConquista';
+import { CONQUISTAS } from '../../lib/gamificacao';
+import { RINGS } from '../../lib/rings';
 
 // Dados mockados para testar os cards
 const mockMissions = [
@@ -41,6 +46,10 @@ export default function ComponentesPage() {
   const [selectedMission, setSelectedMission] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  // Anel da celebração em demonstração (null = nenhuma).
+  const [anelCelebracao, setAnelCelebracao] = useState(null);
+  // Conquista em demonstração (índice em CONQUISTAS; null = nenhuma).
+  const [conquistaDemo, setConquistaDemo] = useState(null);
 
   const handleOpenModal = (mission) => {
     // Guarda a missão escolhida antes de abrir seus detalhes.
@@ -56,19 +65,14 @@ export default function ComponentesPage() {
   };
 
   return (
-    <main className="min-h-screen p-6 md:p-12 space-y-12 max-w-6xl mx-auto">
-      {/* Cabeçalho */}
-      <header className="border-b border-primary/20 pb-6">
-        <span className="text-xs font-semibold tracking-wider uppercase text-accent-text bg-accent/15 border border-accent/30 px-3 py-1 rounded-full">
-          ✓ Showcase de Componentes
-        </span>
-        <h1 className="text-4xl font-extrabold text-foreground mt-3">
-          Componentes Reutilizáveis
-        </h1>
-        <p className="text-foreground-muted mt-2 max-w-2xl">
-          Página de testes para validar o funcionamento do <code className="bg-primary/10 text-primary-text px-2 py-0.5 rounded font-mono">Button</code>, do <code className="bg-primary/10 text-primary-text px-2 py-0.5 rounded font-mono">MissionCard</code> e do <code className="bg-primary/10 text-primary-text px-2 py-0.5 rounded font-mono">Modal</code>.
-        </p>
-      </header>
+    <main>
+      <PageHeader
+        eyebrow="Showcase de Componentes"
+        title="Componentes Reutilizáveis"
+        description="Página de testes para validar o funcionamento do Button, do MissionCard e do Modal."
+      />
+
+      <div className="mx-auto max-w-6xl space-y-12 px-6 py-12">
 
       {/* Toast Feedback */}
       {toastMessage && (
@@ -80,7 +84,7 @@ export default function ComponentesPage() {
 
       {/* Teste 1: Componente Button */}
       <section className="space-y-4 bg-card p-6 rounded-2xl border border-border shadow-sm">
-        <h2 className="text-2xl font-bold text-foreground">1. Componente Button (`src/components/Button.jsx`)</h2>
+        <h2 className="text-2xl font-bold text-foreground [overflow-wrap:anywhere]">1. Componente Button (`src/components/Button.jsx`)</h2>
         <p className="text-sm text-foreground-muted">
           Suporta as variantes <code className="text-primary-text font-mono">primary</code>, <code className="text-accent-text font-mono">ecological</code>, <code className="text-foreground font-mono">dark</code>, <code className="text-primary-text font-mono">outline</code> e <code className="font-mono">ghost</code>, além de tamanhos e acessibilidade por teclado.
         </p>
@@ -114,7 +118,7 @@ export default function ComponentesPage() {
 
       {/* Teste 2: Componente MissionCard */}
       <section className="space-y-4">
-        <h2 className="text-2xl font-bold text-foreground">2. Componente MissionCard (`src/components/MissionCard.jsx`)</h2>
+        <h2 className="text-2xl font-bold text-foreground [overflow-wrap:anywhere]">2. Componente MissionCard (`src/components/MissionCard.jsx`)</h2>
         <p className="text-sm text-foreground-muted">
           Renderização dinâmica com os selos dos Anéis Elementais e botão de engajamento integrado.
         </p>
@@ -132,7 +136,7 @@ export default function ComponentesPage() {
 
       {/* Teste 3: Componente Modal */}
       <section className="space-y-4 bg-card p-6 rounded-2xl border border-border shadow-sm">
-        <h2 className="text-2xl font-bold text-foreground">3. Componente Modal (`src/components/Modal.jsx`)</h2>
+        <h2 className="text-2xl font-bold text-foreground [overflow-wrap:anywhere]">3. Componente Modal (`src/components/Modal.jsx`)</h2>
         <p className="text-sm text-foreground-muted">
           Atende à exigência de interatividade. Suporta fechamento via tecla <kbd className="px-2 py-1 bg-background border border-border rounded text-xs font-mono">ESC</kbd> ou clique na camada de fundo.
         </p>
@@ -141,6 +145,62 @@ export default function ComponentesPage() {
           Abrir Modal Manualmente
         </Button>
       </section>
+
+      {/* Teste 4: Celebração de missão criada */}
+      <section className="space-y-4 bg-card p-6 rounded-2xl border border-border shadow-sm">
+        <h2 className="text-2xl font-bold text-foreground [overflow-wrap:anywhere]">4. Componente CelebracaoAnel (`src/components/CelebracaoAnel.jsx`)</h2>
+        <p className="text-sm text-foreground-muted">
+          Animação exibida ao registrar uma denúncia: cada anel tem partículas e movimento próprios.
+        </p>
+        <div className="flex flex-wrap gap-3 pt-2">
+          {RINGS.map((ring) => {
+            const Icon = ring.Icon;
+            return (
+              <button
+                key={ring.id}
+                type="button"
+                onClick={() => setAnelCelebracao(ring.id)}
+                className={`inline-flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:brightness-110 dark:text-slate-950 ${ring.bg}`}
+              >
+                <Icon aria-hidden="true" />
+                {ring.label}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Teste 5: Aviso de conquista */}
+      <section className="space-y-4 bg-card p-6 rounded-2xl border border-border shadow-sm">
+        <h2 className="text-2xl font-bold text-foreground [overflow-wrap:anywhere]">5. Componente AvisoConquista (`src/components/AvisoConquista.jsx`)</h2>
+        <p className="text-sm text-foreground-muted">
+          Aparece no canto inferior direito, com confetes, quando o protetor desbloqueia uma conquista.
+        </p>
+        <Button
+          variant="primary"
+          onClick={() => setConquistaDemo((atual) => (atual === null ? 0 : (atual + 1) % CONQUISTAS.length))}
+        >
+          Simular conquista
+        </Button>
+      </section>
+
+      {conquistaDemo !== null && (
+        <AvisoConquista
+          key={`${conquistaDemo}-${CONQUISTAS[conquistaDemo].id}`}
+          conquista={CONQUISTAS[conquistaDemo]}
+          onFechar={() => setConquistaDemo(null)}
+        />
+      )}
+
+      {anelCelebracao && (
+        <CelebracaoAnel
+          key={anelCelebracao}
+          anel={anelCelebracao}
+          titulo="Missão de demonstração"
+          xp={20}
+          onFim={() => setAnelCelebracao(null)}
+        />
+      )}
 
       {/* Modal Reutilizável Renderizado */}
       <Modal
@@ -169,6 +229,7 @@ export default function ComponentesPage() {
           </div>
         )}
       </Modal>
+      </div>
     </main>
   );
 }

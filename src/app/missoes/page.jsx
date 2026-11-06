@@ -1,37 +1,60 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import MissionCard from '../../components/MissionCard';
 import Modal from '../../components/Modal';
 import Button from '../../components/Button';
+import PageHeader from '../../components/PageHeader';
+import { RINGS, getRing } from '../../lib/rings';
+import { XP, nivelDe } from '../../lib/gamificacao';
+import { useAuth } from '../../context/AuthContext';
+import {
+  FaHandshake,
+  FaFlagCheckered,
+  FaRightToBracket,
+  FaUserPen,
+  FaMagnifyingGlass,
+  FaLocationDot,
+  FaUsers,
+  FaBolt,
+  FaCircleCheck,
+  FaTriangleExclamation,
+  FaSeedling,
+  FaXmark,
+  FaTrash,
+  FaArrowRight,
+} from 'react-icons/fa6';
 
 // Opções disponíveis para filtrar as ocorrências pelo Anel Elemental.
-const RINGS = [
-  { id: 'todos', label: 'Todos os Anéis', icon: '' },
-  { id: 'terra', label: 'Terra', icon: '🌿' },
-  { id: 'fogo', label: 'Fogo', icon: '🔥' },
-  { id: 'vento', label: 'Vento', icon: '💨' },
-  { id: 'agua', label: 'Água', icon: '💧' },
-  { id: 'coracao', label: 'Coração', icon: '❤️' },
-];
+const FILTROS = [{ id: 'todos', label: 'Todos os Anéis' }, ...RINGS];
 
 export default function MissoesPage() {
+  const { usuario, perfil, setPerfil, chamarApi } = useAuth();
+  const [acaoEmAndamento, setAcaoEmAndamento] = useState(false);
+
   // Estados da lista, da busca e dos feedbacks das operações.
   const [missoes, setMissoes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRing, setSelectedRing] = useState('todos');
 
   const [selectedMission, setSelectedMission] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
+  const [toast, setToast] = useState(null);
+
+  const mostrarToast = (type, text) => {
+    setToast({ type, text });
+    setTimeout(() => setToast(null), 4000);
+  };
 
   const carregarMissoes = async () => {
     try {
       setLoading(true);
+      setError('');
       // Consulta a API local para obter as missões cadastradas.
       const res = await fetch('/api/missoes');
       if (!res.ok) throw new Error('Falha ao carregar as missões');
@@ -48,20 +71,78 @@ export default function MissoesPage() {
     carregarMissoes();
   }, []);
 
+  // Missão recém-criada (vinda da celebração do formulário), mostrada em destaque.
+  const [novaId, setNovaId] = useState(null);
+
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('nova');
+    if (!id) return;
+    setNovaId(id);
+    // Limpa a URL para o destaque não repetir ao recarregar a página.
+    window.history.replaceState(null, '', '/missoes');
+  }, []);
+
+  useEffect(() => {
+    if (loading || !novaId) return;
+    const cartao = document.getElementById(`missao-${novaId}`);
+    cartao?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    mostrarToast('success', 'Sua missão já está no painel!');
+    const apagar = setTimeout(() => setNovaId(null), 6000);
+    return () => clearTimeout(apagar);
+  }, [loading, novaId]);
+
   const handleDeleteMission = async (id) => {
     try {
-      // Exclui a ocorrência e atualiza a lista após a resposta da API.
-      const res = await fetch(`/api/missoes?id=${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Erro ao excluir missão');
-      
-      setToastMessage('Denúncia/Missão removida com sucesso!');
+      // Exclui a ocorrência (só o criador pode) e atualiza a lista após a resposta da API.
+      const resposta = await chamarApi(`/api/missoes?id=${id}`, { method: 'DELETE' });
+      if (resposta.perfil) setPerfil(resposta.perfil);
+
       setIsModalOpen(false);
       setConfirmingDelete(false);
+      mostrarToast('success', 'Denúncia/Missão removida com sucesso!');
       carregarMissoes();
-      setTimeout(() => setToastMessage(''), 4000);
     } catch (err) {
-      alert(err.message);
+      mostrarToast('error', err.message);
     }
+  };
+
+  // Engaja ou conclui a missão: a API valida, atualiza a missão e dá o XP.
+  const handleAcaoMissao = async (acao) => {
+    if (!selectedMission) return;
+    try {
+      setAcaoEmAndamento(true);
+      const nivelAntes = nivelDe(perfil?.xp).numero;
+      const resposta = await chamarApi(`/api/missoes?id=${selectedMission.id}`, {
+        method: 'PATCH',
+        body: { acao },
+      });
+
+      setPerfil(resposta.perfil);
+      setMissoes((lista) => lista.map((m) => (m.id === resposta.missao.id ? resposta.missao : m)));
+      setSelectedMission(resposta.missao);
+
+      const novoNivel = nivelDe(resposta.perfil.xp);
+      const base = acao === 'engajar' ? 'Você se engajou na missão!' : 'Missão concluída!';
+      mostrarToast(
+        'success',
+        novoNivel.numero > nivelAntes
+          ? `${base} +${resposta.xpGanho} XP. Você subiu para o nível ${novoNivel.nome}!`
+          : `${base} +${resposta.xpGanho} XP`
+      );
+    } catch (err) {
+      mostrarToast('error', err.message);
+    } finally {
+      setAcaoEmAndamento(false);
+    }
+  };
+
+  // Relação do usuário logado com cada missão (para os selos dos cards).
+  const estadoDe = (m) => {
+    if (!usuario) return null;
+    if (m.creatorUid === usuario.uid) return 'criada';
+    if ((m.concluidoPor || []).includes(usuario.uid)) return 'concluida';
+    if ((m.participantIds || []).includes(usuario.uid)) return 'engajada';
+    return null;
   };
 
   const handleCloseModal = () => {
@@ -71,114 +152,153 @@ export default function MissoesPage() {
 
   const missoesFiltradas = missoes.filter((m) => {
     // A busca considera título e localidade; o anel é um filtro adicional.
-    const matchesSearch = 
-      m.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      m.location.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesRing = selectedRing === 'todos' || m.ring.toLowerCase() === selectedRing;
+    const termo = searchTerm.toLowerCase();
+    const matchesSearch =
+      (m.title || '').toLowerCase().includes(termo) ||
+      (m.location || '').toLowerCase().includes(termo);
+
+    const matchesRing = selectedRing === 'todos' || (m.ring || '').toLowerCase() === selectedRing;
 
     return matchesSearch && matchesRing;
   });
 
+  const ringModal = selectedMission ? getRing(selectedMission.ring) : null;
+  const RingModalIcon = ringModal?.Icon;
+
   return (
-    <main className="max-w-6xl mx-auto px-6 py-10 space-y-8 min-h-[80vh]">
-      {/* Cabeçalho */}
-      <header className="space-y-2 border-b border-border pb-6">
-        <span className="text-xs font-bold text-accent-text uppercase tracking-wider bg-accent/15 border border-accent/30 px-3 py-1 rounded-full">
-          ✓ Painel Comunitário
-        </span>
-        <h1 className="text-3xl md:text-4xl font-extrabold text-foreground">
-          Missões e Ocorrências Ativas
-        </h1>
-        <p className="text-foreground-muted text-sm md:text-base max-w-2xl">
-          Acompanhe os focos de atuação ecológica, filtre por elemento e engaje-se diretamente em causas ativas na sua região.
-        </p>
-      </header>
+    <main>
+      <PageHeader
+        eyebrow={<><FaSeedling aria-hidden="true" /> Painel Comunitário</>}
+        title="Missões e Ocorrências Ativas"
+        description="Acompanhe os focos de atuação ecológica, filtre por elemento e engaje-se diretamente em causas ativas na sua região."
+      />
 
-      {/* Toast Feedback */}
-      {toastMessage && (
-        <div className="bg-accent text-white p-4 rounded-xl shadow-md flex justify-between items-center animate-fadeIn">
-          <span>🌿 {toastMessage}</span>
-          <button onClick={() => setToastMessage('')} className="font-bold ml-4 cursor-pointer">✕</button>
-        </div>
-      )}
+      <div className="mx-auto max-w-6xl space-y-8 px-6 py-10">
+        {/* Barra de Filtros e Busca */}
+        <section aria-label="Filtros de ocorrências" className="space-y-4 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="relative w-full md:max-w-md">
+              <label htmlFor="search" className="sr-only">Buscar missão por título ou cidade</label>
+              <FaMagnifyingGlass
+                aria-hidden="true"
+                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-foreground-muted"
+              />
+              <input
+                id="search"
+                type="search"
+                placeholder="Buscar por título ou localidade..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full rounded-xl border border-border bg-background py-3 pl-11 pr-4 text-sm text-foreground placeholder:text-foreground-muted/70 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
 
-      {/* Barra de Filtros e Busca */}
-      <section className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-4">
-        <h2 className="text-lg font-bold text-foreground">Filtros de Ocorrências</h2>
-        <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
-          <div className="w-full md:w-1/2">
-            <label htmlFor="search" className="sr-only">Buscar missão por título ou cidade</label>
-            <input
-              id="search"
-              type="text"
-              placeholder="🔍 Buscar por título ou localidade..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm"
-            />
+            <p className="text-sm text-foreground-muted" aria-live="polite">
+              Exibindo <strong className="text-foreground">{missoesFiltradas.length}</strong> de {missoes.length} ocorrências
+            </p>
           </div>
 
-          <span className="text-xs font-bold text-foreground-muted">
-            Exibindo {missoesFiltradas.length} de {missoes.length} ocorrências
-          </span>
-        </div>
+          {/* Botões de Seleção de Anel Elemental */}
+          <div className="flex flex-wrap gap-2 border-t border-border pt-4" role="group" aria-label="Filtrar por anel elemental">
+            {FILTROS.map((filtro) => {
+              const ativo = selectedRing === filtro.id;
+              const Icon = filtro.Icon;
+              return (
+                <button
+                  key={filtro.id}
+                  type="button"
+                  onClick={() => setSelectedRing(filtro.id)}
+                  aria-pressed={ativo}
+                  className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                    ativo
+                      ? `border-transparent text-white shadow-md dark:text-slate-950 ${filtro.bg || 'bg-foreground'}`
+                      : 'border-border bg-background text-foreground-muted hover:border-primary/40 hover:text-foreground'
+                  }`}
+                >
+                  {Icon && <Icon aria-hidden="true" className={ativo ? '' : filtro.text} />}
+                  {filtro.label}
+                </button>
+              );
+            })}
+          </div>
+        </section>
 
-        {/* Botões de Seleção de Anel Elemental */}
-        <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
-          {RINGS.map((ring) => (
-            <button
-              key={ring.id}
-              onClick={() => setSelectedRing(ring.id)}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                selectedRing === ring.id
-                  ? 'bg-primary-dark text-white shadow-xs'
-                  : 'bg-background hover:bg-primary/10 text-foreground border border-border'
-              }`}
-            >
-              <span>{ring.icon}</span>
-              <span>{ring.label}</span>
-            </button>
-          ))}
-        </div>
-      </section>
-
-      {/* Estado de Carregamento e Erro */}
-      {loading && (
-        <div className="text-center py-16 text-foreground-muted">
-          <p className="text-lg font-medium animate-pulse">Carregando missões ambientais...</p>
-        </div>
-      )}
-
-      {error && (
-        <div className="bg-ring-fire/10 border border-ring-fire text-ring-fire p-4 rounded-xl text-center font-bold">
-          <p>Erro ao conectar com a API: {error}</p>
-        </div>
-      )}
-
-      {/* Grid de Missões */}
-      {!loading && !error && (
-        missoesFiltradas.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {missoesFiltradas.map((mission) => (
-              <MissionCard
-                key={mission.id}
-                mission={mission}
-                onSelectMission={(m) => {
-                  setSelectedMission(m);
-                  setConfirmingDelete(false);
-                  setIsModalOpen(true);
-                }}
-              />
+        {/* Estado de Carregamento */}
+        {loading && (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true">
+            <span className="sr-only">Carregando missões ambientais...</span>
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="space-y-4 rounded-2xl border border-border bg-card p-6 animate-pulse">
+                <div className="h-6 w-24 rounded-full bg-foreground/10" />
+                <div className="h-5 w-3/4 rounded bg-foreground/10" />
+                <div className="h-4 w-full rounded bg-foreground/10" />
+                <div className="h-4 w-5/6 rounded bg-foreground/10" />
+                <div className="h-9 w-full rounded-lg bg-foreground/10" />
+              </div>
             ))}
           </div>
-        ) : (
-          <div className="text-center py-16 bg-card border border-border rounded-2xl p-8 space-y-3">
-            <p className="text-3xl">🌱</p>
-            <h3 className="text-lg font-bold text-foreground">Nenhuma missão encontrada</h3>
-            <p className="text-sm text-foreground-muted">Tente ajustar seus termos de busca ou o filtro de Anel Elemental.</p>
+        )}
+
+        {/* Estado de Erro */}
+        {error && !loading && (
+          <div role="alert" className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-danger-text/30 bg-danger-text/10 p-5 sm:flex-row sm:items-center">
+            <p className="flex items-center gap-2 font-semibold text-danger-text">
+              <FaTriangleExclamation aria-hidden="true" />
+              Erro ao conectar com a API: {error}
+            </p>
+            <Button variant="outline" size="sm" onClick={carregarMissoes}>
+              Tentar novamente
+            </Button>
           </div>
-        )
+        )}
+
+        {/* Grid de Missões */}
+        {!loading && !error && (
+          missoesFiltradas.length > 0 ? (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {missoesFiltradas.map((mission) => (
+                <MissionCard
+                  key={mission.id}
+                  mission={mission}
+                  estadoUsuario={estadoDe(mission)}
+                  destaque={mission.id === novaId}
+                  onSelectMission={(m) => {
+                    setSelectedMission(m);
+                    setConfirmingDelete(false);
+                    setIsModalOpen(true);
+                  }}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-border bg-card px-8 py-16 text-center">
+              <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10 text-2xl text-accent-text">
+                <FaSeedling aria-hidden="true" />
+              </span>
+              <h2 className="mt-4 text-lg font-bold text-foreground">Nenhuma missão encontrada</h2>
+              <p className="mt-1 text-sm text-foreground-muted">
+                Tente ajustar seus termos de busca ou o filtro de Anel Elemental.
+              </p>
+            </div>
+          )
+        )}
+      </div>
+
+      {/* Toast Feedback */}
+      {toast && (
+        <div
+          role="status"
+          aria-live="polite"
+          className={`fixed bottom-6 left-1/2 z-[60] flex w-[calc(100%-2rem)] max-w-md -translate-x-1/2 items-center gap-3 rounded-2xl px-5 py-4 shadow-2xl animate-fadeIn ${
+            toast.type === 'error' ? 'bg-ring-fire text-white' : 'bg-accent-text text-white dark:text-slate-950'
+          }`}
+        >
+          {toast.type === 'error' ? <FaTriangleExclamation aria-hidden="true" /> : <FaCircleCheck aria-hidden="true" />}
+          <span className="flex-1 text-sm font-semibold">{toast.text}</span>
+          <button onClick={() => setToast(null)} aria-label="Fechar aviso" className="cursor-pointer rounded-md p-1 hover:bg-white/15">
+            <FaXmark aria-hidden="true" />
+          </button>
+        </div>
       )}
 
       {/* Modal */}
@@ -188,63 +308,111 @@ export default function MissoesPage() {
         title={selectedMission ? selectedMission.title : 'Detalhes'}
       >
         {selectedMission && (
-          <div className="space-y-4">
-            <p className="text-foreground-muted text-sm leading-relaxed">{selectedMission.description}</p>
+          <div className="space-y-5">
+            <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold text-white dark:text-slate-950 ${ringModal.bg}`}>
+              <RingModalIcon aria-hidden="true" />
+              Anel {ringModal.label}
+            </span>
 
-            <div className="bg-background p-4 rounded-xl border border-border space-y-1.5 text-xs text-foreground font-medium">
-              <p>📍 <strong>Localização:</strong> {selectedMission.location}</p>
-              <p>👥 <strong>Voluntários:</strong> {selectedMission.participants} Protetores</p>
-              <p>🏷️ <strong>Anel Elemental:</strong> {selectedMission.ring?.toUpperCase()}</p>
-              <p>⚡ <strong>Status:</strong> {selectedMission.status}</p>
-            </div>
+            <p className="text-sm leading-relaxed text-foreground-muted">{selectedMission.description}</p>
+
+            <Link
+              href={`/missoes/${selectedMission.id}`}
+              className="inline-flex items-center gap-2 text-sm font-bold text-primary-text hover:underline"
+            >
+              Abrir a página da missão e o chat
+              <FaArrowRight aria-hidden="true" />
+            </Link>
+
+            <dl className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {[
+                { Icon: FaLocationDot, label: 'Localização', value: selectedMission.location },
+                { Icon: FaUsers, label: 'Voluntários', value: `${selectedMission.participants} Protetores` },
+                { Icon: FaBolt, label: 'Status', value: selectedMission.status },
+              ].map(({ Icon, label, value }) => (
+                <div key={label} className="rounded-xl border border-border bg-background p-3">
+                  <dt className="flex items-center gap-1.5 text-xs font-semibold text-foreground-muted">
+                    <Icon aria-hidden="true" className="text-primary-text" />
+                    {label}
+                  </dt>
+                  <dd className="mt-1 text-sm font-bold text-foreground">{value}</dd>
+                </div>
+              ))}
+            </dl>
 
             {/* Confirmação de Exclusão (Passo 2) */}
             {confirmingDelete ? (
-              <div className="bg-ring-fire/10 border border-ring-fire/30 p-4 rounded-xl space-y-3 animate-fadeIn">
-                <p className="text-xs font-bold text-ring-fire flex items-center gap-1.5">
-                  <span>Tem certeza que deseja excluir esta ocorrência permanentemente?</span>
+              <div className="space-y-3 rounded-xl border border-danger-text/30 bg-danger-text/10 p-4 animate-fadeIn">
+                <p className="text-sm font-semibold text-danger-text">
+                  Tem certeza que deseja excluir esta ocorrência permanentemente?
                 </p>
-                <div className="flex justify-end gap-2 pt-1">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setConfirmingDelete(false)}
-                  >
+                <div className="flex flex-col-reverse justify-end gap-2 sm:flex-row">
+                  <Button variant="outline" size="sm" onClick={() => setConfirmingDelete(false)}>
                     Voltar / Cancelar
                   </Button>
-                  <button
-                    onClick={() => handleDeleteMission(selectedMission.id)}
-                    className="bg-ring-fire hover:opacity-90 text-white font-bold text-xs px-4 py-2 rounded-xl transition-all cursor-pointer shadow-xs"
-                  >
+                  <Button variant="danger" size="sm" onClick={() => handleDeleteMission(selectedMission.id)}>
+                    <FaTrash aria-hidden="true" />
                     Sim, Excluir Ocorrência
-                  </button>
+                  </Button>
                 </div>
               </div>
             ) : (
-              /* Ações Padrão */
-              <div className="flex justify-between items-center pt-4 border-t border-border">
-                <button
-                  onClick={() => setConfirmingDelete(true)}
-                  className="text-xs text-ring-fire hover:underline font-bold cursor-pointer"
-                >
-                  Excluir Ocorrência
-                </button>
+              /* Ações Padrão: dependem da relação do usuário com a missão */
+              <div className="flex flex-col-reverse gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
+                {estadoDe(selectedMission) === 'criada' ? (
+                  <button
+                    onClick={() => setConfirmingDelete(true)}
+                    className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-bold text-danger-text transition hover:bg-danger-text/10"
+                  >
+                    <FaTrash aria-hidden="true" />
+                    Excluir Ocorrência
+                  </button>
+                ) : (
+                  <span />
+                )}
 
-                <div className="flex gap-2">
+                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center">
                   <Button variant="outline" size="sm" onClick={handleCloseModal}>
                     Fechar
                   </Button>
-                  <Button
-                    variant="ecological"
-                    size="sm"
-                    onClick={() => {
-                      handleCloseModal();
-                      setToastMessage(`Você se voluntariou para: "${selectedMission.title}"!`);
-                      setTimeout(() => setToastMessage(''), 4000);
-                    }}
-                  >
-                    Confirmar Engajamento
-                  </Button>
+
+                  {!usuario && (
+                    <Link
+                      href="/login?voltar=/missoes"
+                      className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-dark px-3.5 py-2 text-sm font-semibold text-white hover:brightness-110 dark:text-slate-950"
+                    >
+                      <FaRightToBracket aria-hidden="true" />
+                      Entre para participar
+                    </Link>
+                  )}
+
+                  {usuario && estadoDe(selectedMission) === 'criada' && (
+                    <span className="inline-flex items-center gap-2 rounded-lg bg-ring-wind/10 px-3.5 py-2 text-sm font-bold text-ring-wind">
+                      <FaUserPen aria-hidden="true" />
+                      Você registrou esta missão
+                    </span>
+                  )}
+
+                  {usuario && estadoDe(selectedMission) === 'concluida' && (
+                    <span className="inline-flex items-center gap-2 rounded-lg bg-accent/10 px-3.5 py-2 text-sm font-bold text-accent-text">
+                      <FaCircleCheck aria-hidden="true" />
+                      Missão concluída por você
+                    </span>
+                  )}
+
+                  {usuario && estadoDe(selectedMission) === 'engajada' && (
+                    <Button variant="ecological" size="sm" disabled={acaoEmAndamento} onClick={() => handleAcaoMissao('concluir')}>
+                      <FaFlagCheckered aria-hidden="true" />
+                      {acaoEmAndamento ? 'Salvando...' : `Marcar como concluída (+${XP.concluir} XP)`}
+                    </Button>
+                  )}
+
+                  {usuario && estadoDe(selectedMission) === null && (
+                    <Button variant="ecological" size="sm" disabled={acaoEmAndamento} onClick={() => handleAcaoMissao('engajar')}>
+                      <FaHandshake aria-hidden="true" />
+                      {acaoEmAndamento ? 'Salvando...' : `Confirmar Engajamento (+${XP.engajar} XP)`}
+                    </Button>
+                  )}
                 </div>
               </div>
             )}

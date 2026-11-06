@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { FaArrowUp } from 'react-icons/fa6';
 
 export default function ScrollToTop() {
   // O botão só fica interativo depois que a página passa do limite definido.
@@ -25,27 +26,14 @@ export default function ScrollToTop() {
       onClick={subir}
       title="Voltar ao topo"
       aria-label="Voltar ao topo"
-      className={`fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full border-none cursor-pointer flex items-center justify-center text-white bg-gradient-to-r from-primary to-primary-dark shadow-lg transition-all duration-300 ${
+      tabIndex={visivel ? 0 : -1}
+      className={`fixed bottom-6 right-6 z-40 flex h-12 w-12 cursor-pointer items-center justify-center rounded-full bg-primary-dark text-white shadow-lg shadow-primary/30 transition-all duration-300 hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:text-slate-950 ${
         visivel
-          ? 'opacity-100 translate-y-0 pointer-events-auto'
-          : 'opacity-0 translate-y-4 pointer-events-none'
+          ? 'pointer-events-auto translate-y-0 opacity-100'
+          : 'pointer-events-none translate-y-4 opacity-0'
       }`}
     >
-      {/* Ícone de Seta para cima em SVG puro (não precisa de bibliotecas externas) */}
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M12 19V5" />
-        <path d="m5 12 7-7 7 7" />
-      </svg>
+      <FaArrowUp aria-hidden="true" />
     </button>
   );
 }

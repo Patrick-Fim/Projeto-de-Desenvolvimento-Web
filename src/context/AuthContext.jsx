@@ -1,0 +1,79 @@
+'use client';
+
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { auth } from '../lib/firebaseAuth';
+
+const AuthContext = createContext(null);
+
+// Guarda quem está logado e o perfil de gamificação, para todas as telas.
+export function AuthProvider({ children }) {
+  const [usuario, setUsuario] = useState(null);
+  const [perfil, setPerfil] = useState(null);
+  const [carregando, setCarregando] = useState(true);
+  // Nome digitado no cadastro, usado quando o perfil é criado no primeiro acesso.
+  const nomePendente = useRef('');
+
+  // Chama a API já enviando o token do usuário logado no cabeçalho.
+  const chamarApi = useCallback(async (caminho, { method = 'GET', body } = {}) => {
+    const headers = {};
+    if (body !== undefined) headers['Content-Type'] = 'application/json';
+    if (auth.currentUser) headers.Authorization = `Bearer ${await auth.currentUser.getIdToken()}`;
+
+    const res = await fetch(caminho, {
+      method,
+      headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+    const dados = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(dados.message || 'Algo deu errado. Tente novamente.');
+    return dados;
+  }, []);
+
+  // Registra o acesso do dia (foguinho) e traz o perfil atualizado.
+  const sincronizarPerfil = useCallback(async () => {
+    const dados = await chamarApi('/api/perfil/checkin', {
+      method: 'POST',
+      body: { nome: nomePendente.current },
+    });
+    nomePendente.current = '';
+    setPerfil(dados);
+    return dados;
+  }, [chamarApi]);
+
+  useEffect(() => {
+    return onAuthStateChanged(auth, async (novoUsuario) => {
+      setUsuario(novoUsuario);
+      if (novoUsuario) {
+        try {
+          await sincronizarPerfil();
+        } catch {
+          setPerfil(null);
+        }
+      } else {
+        setPerfil(null);
+      }
+      setCarregando(false);
+    });
+  }, [sincronizarPerfil]);
+
+  const definirNomePendente = useCallback((nome) => {
+    nomePendente.current = nome;
+  }, []);
+
+  const sair = useCallback(() => signOut(auth), []);
+
+  return (
+    <AuthContext.Provider
+      value={{ usuario, perfil, setPerfil, carregando, chamarApi, sincronizarPerfil, definirNomePendente, sair }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  const contexto = useContext(AuthContext);
+  if (!contexto) throw new Error('useAuth precisa estar dentro de <AuthProvider>.');
+  return contexto;
+}

@@ -1,53 +1,79 @@
 import Link from 'next/link';
+import Logo from './Logo';
+import { RINGS } from '../lib/rings';
+
+const LINKS = [
+  { href: '/', label: 'Início' },
+  { href: '/missoes', label: 'Painel de Missões' },
+  { href: '/denuncia', label: 'Registrar Denúncia' },
+  { href: '/ranking', label: 'Ranking' },
+  { href: '/perfil', label: 'Meu Perfil' },
+];
 
 export default function Footer() {
   return (
-    <footer className="bg-card border-t border-border text-foreground mt-16 transition-colors">
-      <div className="max-w-6xl mx-auto px-6 py-10 grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
-        {/* Coluna 1: Logo e Descrição */}
-        <div className="space-y-2">
-          <p className="font-black text-xl flex items-center gap-2 text-foreground">
-            <span>🌎</span> Protetores.Terra
-          </p>
-          <p className="text-foreground-muted text-sm leading-relaxed max-w-sm">
+    <footer className="mt-24 border-t border-border bg-card">
+      {/* Faixa com as cores dos cinco anéis. */}
+      <div className="flex h-1.5" aria-hidden="true">
+        {RINGS.map((ring) => (
+          <span key={ring.id} className={`flex-1 ${ring.bg}`} />
+        ))}
+      </div>
+
+      <div className="mx-auto grid max-w-6xl gap-10 px-6 py-14 md:grid-cols-[1.5fr_1fr_1fr]">
+        {/* Marca e descrição */}
+        <div className="space-y-4">
+          <Logo />
+          <p className="max-w-sm text-sm leading-relaxed text-foreground-muted">
             Movimento ambiental colaborativo voltado ao monitoramento, denúncia e engajamento comunitário.
           </p>
-        </div>
-
-        {/* Coluna 2: Links Rápidos (Centralizado no Desktop) */}
-        <div className="md:justify-self-center">
-          <h2 className="font-bold text-foreground text-base mb-3">Links Rápidos</h2>
-          <ul className="space-y-2 text-sm text-foreground-muted">
-            <li>
-              <Link href="/" className="hover:text-primary-dark transition-colors">
-                Início
-              </Link>
-            </li>
-            <li>
-              <Link href="/missoes" className="hover:text-primary-dark transition-colors">
-                Painel de Missões
-              </Link>
-            </li>
-            <li>
-              <Link href="/denuncia" className="hover:text-primary-dark transition-colors">
-                Registrar Denúncia
-              </Link>
-            </li>
+          <ul className="flex gap-2" aria-label="Anéis elementais">
+            {RINGS.map((ring) => {
+              const Icon = ring.Icon;
+              return (
+                <li
+                  key={ring.id}
+                  title={ring.label}
+                  className={`flex h-9 w-9 items-center justify-center rounded-lg ${ring.soft} ${ring.text}`}
+                >
+                  <Icon aria-hidden="true" />
+                  <span className="sr-only">{ring.label}</span>
+                </li>
+              );
+            })}
           </ul>
         </div>
 
-        {/* Coluna 3: Projeto Acadêmico (Alinhado à Direita no Desktop) */}
-        <div className="md:justify-self-end">
-          <h2 className="font-bold text-foreground text-base mb-3">Projeto Acadêmico</h2>
-          <p className="text-xs text-foreground-muted leading-relaxed">
-            Desenvolvimento Web • Unidade 2<br />
-            Conformidade WCAG AA & Next.js App Router
+        {/* Links rápidos */}
+        <nav aria-label="Links do rodapé">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">Navegação</h2>
+          <ul className="mt-4 space-y-2.5 text-sm">
+            {LINKS.map((link) => (
+              <li key={link.href}>
+                <Link href={link.href} className="text-foreground-muted transition-colors hover:text-primary-text">
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        {/* Projeto acadêmico */}
+        <div>
+          <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">Projeto Acadêmico</h2>
+          <p className="mt-4 text-sm leading-relaxed text-foreground-muted">
+            Desenvolvimento Web · Unidade 2
+            <br />
+            Next.js App Router · Firebase · WCAG AA
           </p>
         </div>
       </div>
 
-      <div className="border-t border-border py-4 text-center text-xs text-foreground-muted">
-        © 2026 Protetores da Terra. O Poder é de Vocês!
+      <div className="border-t border-border">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-6 py-5 text-xs text-foreground-muted sm:flex-row">
+          <p>© 2026 Protetores da Terra.</p>
+          <p className="font-semibold">O Poder é de Vocês!</p>
+        </div>
       </div>
     </footer>
   );
