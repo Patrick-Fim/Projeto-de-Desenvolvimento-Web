@@ -174,6 +174,15 @@ export default function PerfilPage() {
     if (!carregando && !usuario) router.replace('/login?voltar=/perfil');
   }, [carregando, usuario, router]);
 
+  // Conta recém-criada (?novo=1): abre a personalização do perfil e limpa a URL.
+  useEffect(() => {
+    if (carregando || !usuario) return;
+    if (new URLSearchParams(window.location.search).get('novo') === '1') {
+      setEditando(true);
+      window.history.replaceState(null, '', '/perfil');
+    }
+  }, [carregando, usuario]);
+
   useEffect(() => {
     listarMissoes()
       .then(setMissoes)
