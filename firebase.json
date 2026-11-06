@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "site": "protetores-da-terra",
+    "site": "protetoresdaterra",
     "public": "out",
     "cleanUrls": true,
     "ignore": [
