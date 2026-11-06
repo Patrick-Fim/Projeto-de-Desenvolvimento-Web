@@ -92,7 +92,7 @@ Opacidade: use o modificador do Tailwind (`bg-primary/10`, `border-accent/30`).
 | `SeletorImagem` | Escolher/trocar/remover imagem com pré-visualização e compressão automática | `id`, `rotulo`, `formato` (`avatar`, `banner`, `capa`), `valor`, `onChange`, `dica` |
 | `ImagemSalva` | Mostra uma imagem salva no Firestore pelo id (com cache e espaço reservado ao carregar) | `id`, `alt`, `className` |
 | `Conversa` | Chat em tempo real genérico (missão, time e privado), com imagens | `caminho` (ex.: `['missoes', id, 'mensagens']`), `titulo`, `subtitulo`, `podeParticipar`, `usuarioUid`, `fotosMembros`, `acaoBloqueado`, `compacto` |
-| `ChatFlutuante` | Balão no canto inferior direito com as conversas privadas entre amigos (montado no layout) | — |
+| `ChatFlutuante` | Balão no canto inferior direito: chat do time (anel favorito) e conversas privadas entre amigos, escolhidos na mesma lista (montado no layout) | — |
 | `BotaoAmizade` | Adicionar / pedido enviado / aceitar / conversar com outro protetor | `uid`, `nome`, `compacto` |
 | `CampoBusca` | Campo de busca com lupa | `id`, `value`, `onChange`, `placeholder`, `rotulo` |
 | `SeloPrazo` | Data limite da missão: "Faltam X dias", "Termina hoje", "Prazo encerrado" | `prazo` (AAAA-MM-DD), `completo` |
@@ -146,9 +146,10 @@ prontas `bg`, `text`, `border`, `soft`. `STATUS_STYLES` define as cores dos stat
 ### Social, times e rankings
 
 - **Amigos**: coleção `amizades`, id = os dois uids em ordem separados por `_` (`idPar`). Status `pendente` → `aceita`.
-  O `AmigosContext` escuta as amizades em tempo real e controla o balão (`abrirConversa(uid)`).
+  O `AmigosContext` escuta as amizades em tempo real e controla o balão: `abrirConversa(uid)` (amigo) e `abrirTime()` (time).
 - **Conversa privada**: `conversas/{par}/mensagens`, só entre amigos aceitos.
-- **Time**: `times/{anel}/mensagens`; o time é o anel favorito do perfil (página `/time`).
+- **Time**: `times/{anel}/mensagens`; o time é o anel favorito do perfil. A página `/time` mostra o placar e os
+  membros; o chat do time abre no balão de conversas (`ChatFlutuante`), ao lado dos amigos.
 - **Rankings**: `ranking(periodo)` e `rankingElementos(periodo)`, com `periodo` = `semanal`, `mensal` ou `geral`.
   O XP do período fica em `xpPorPeriodo` (chaves `chaveSemana()` / `chaveMes()` de `datas.js`) e é
   atualizado por `aplicarXp` sempre que alguém ganha ou perde XP. O ranking dos elementos soma no navegador

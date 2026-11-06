@@ -3,14 +3,14 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { FaTrophy, FaUsers, FaStar, FaPenToSquare } from 'react-icons/fa6';
+import { FaTrophy, FaUsers, FaStar, FaPenToSquare, FaComments } from 'react-icons/fa6';
 import { useAuth } from '../../context/AuthContext';
+import { useAmigos } from '../../context/AmigosContext';
 import { getRing } from '../../lib/rings';
 import { nivelDe } from '../../lib/gamificacao';
 import { membrosDoTime, rankingElementos } from '../../lib/servicos';
 import Avatar from '../../components/Avatar';
 import BotaoAmizade from '../../components/BotaoAmizade';
-import Conversa from '../../components/Conversa';
 
 const formatar = (n) => new Intl.NumberFormat('pt-BR').format(n || 0);
 
@@ -18,6 +18,7 @@ const formatar = (n) => new Intl.NumberFormat('pt-BR').format(n || 0);
 export default function TimePage() {
   const router = useRouter();
   const { usuario, perfil, carregando } = useAuth();
+  const { abrirTime } = useAmigos();
   const [membros, setMembros] = useState([]);
   const [placar, setPlacar] = useState(null);
 
@@ -86,13 +87,23 @@ export default function TimePage() {
       </p>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-        <Conversa
-          key={anel}
-          caminho={['times', anel, 'mensagens']}
-          titulo={`Chat do Time ${ring.label}`}
-          subtitulo="Só protetores deste elemento participam"
-          usuarioUid={usuario.uid}
-        />
+        <section className="flex min-h-[260px] flex-col items-center justify-center rounded-2xl border border-border bg-card p-8 text-center shadow-sm">
+          <span className={`flex h-16 w-16 items-center justify-center rounded-2xl text-2xl text-white dark:text-slate-950 ${ring.bg}`}>
+            <FaComments aria-hidden="true" />
+          </span>
+          <h2 className="mt-4 text-lg font-bold text-foreground">Chat do Time {ring.label}</h2>
+          <p className="mt-2 max-w-sm text-sm text-foreground-muted">
+            A conversa do time agora fica no balão de conversas, junto com os seus amigos. Só protetores
+            deste elemento participam.
+          </p>
+          <button
+            type="button"
+            onClick={abrirTime}
+            className="mt-5 inline-flex cursor-pointer items-center gap-2 rounded-xl bg-primary-dark px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:brightness-110 dark:text-slate-950"
+          >
+            <FaComments aria-hidden="true" /> Abrir chat do time
+          </button>
+        </section>
 
         <aside className="h-fit rounded-2xl border border-border bg-card p-6 shadow-sm lg:sticky lg:top-24">
           <h2 className="flex items-center justify-between text-base font-bold text-foreground">
