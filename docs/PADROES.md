@@ -14,7 +14,10 @@ Referências visuais ao vivo (fora do menu, acesse pela URL):
 
 - **Next.js 16 (App Router)** + **React 19**, em **JavaScript** (`.jsx`/`.js`).
 - **Tailwind CSS v4** (configurado por CSS, sem `tailwind.config.js`).
-- **Firebase**: Authentication (e-mail/senha) e Firestore (banco).
+- **Firebase**: Authentication (e-mail/senha), Firestore (banco) e Hosting (hospedagem gratuita).
+- **Site estático** (`output: 'export'` em `next.config.mjs`): o build gera a pasta `out/`, publicada
+  no Firebase Hosting. **Não existe servidor**: nada de rotas `app/api`, Server Actions ou rotas dinâmicas
+  (`[id]`). Use query string (ex.: `/missao?id=...`) e leia o valor no navegador.
 - **react-icons** (`react-icons/fa6`) para ícones — sempre ícones **preenchidos** (Font Awesome 6 solid).
 - Imports com **caminho relativo** (`../../components/Button`). O atalho `@/` não está configurado.
 
@@ -22,13 +25,16 @@ Referências visuais ao vivo (fora do menu, acesse pela URL):
 
 ```
 src/
-├── app/                  Páginas (cada pasta é uma rota) e API (app/api/...)
-│   └── api/              Rotas HTTP: missoes, perfil, perfil/checkin, ranking, estatisticas
+├── app/                  Páginas (cada pasta é uma rota)
 ├── components/           Componentes reutilizáveis (Button, Modal, PageHeader, ...)
 ├── context/              AuthContext (usuário logado + perfil, para todas as telas)
-├── lib/                  Dados e regras compartilhadas (rings, gamificacao, datas, firebase)
-│   └── servidor/         Código usado só pela API (validação de token, perfis)
+├── lib/
+│   ├── servicos.js       TODAS as operações de dados (missões, perfil, XP, chat, imagens)
+│   ├── firestoreRest.js  Cliente da API REST do Firestore (GET/POST/PATCH/DELETE)
+│   └── ...               rings, gamificacao, missoes, perfis, imagens, datas, firebase
 └── styles/               globals.css, theme.css (tokens) e fonts.css
+firestore.rules           Regras de segurança (quem pode ler/gravar o quê)
+firebase.json             Configuração do Hosting (pasta out/) e das regras
 ```
 
 ## 3. Tokens de design (`src/styles/theme.css`)
@@ -84,6 +90,7 @@ Opacidade: use o modificador do Tailwind (`bg-primary/10`, `border-accent/30`).
 | `Avatar` | Foto de perfil ou, sem foto, iniciais na cor do anel favorito | `nome`, `anel`, `fotoId`, `tamanho`: `sm`, `md`, `lg`, `xl` |
 | `Campo` | Rótulo + campo + erro/dica de todo formulário. Exporta também `classeCampo(temErro)` e `a11yCampo(id, erro)` | `id`, `label`, `error`, `obrigatorio`, `dica` |
 | `SeletorImagem` | Escolher/trocar/remover imagem com pré-visualização e compressão automática | `id`, `rotulo`, `formato` (`avatar`, `banner`, `capa`), `valor`, `onChange`, `dica` |
+| `ImagemSalva` | Mostra uma imagem salva no Firestore pelo id (com cache e espaço reservado ao carregar) | `id`, `alt`, `className` |
 | `SeloPrazo` | Data limite da missão: "Faltam X dias", "Termina hoje", "Prazo encerrado" | `prazo` (AAAA-MM-DD), `completo` |
 | `Foguinho` | Dias seguidos de acesso | `dias`, `grande` |
 | `Logo` | Marca (cabeçalho e rodapé) | — |
@@ -111,53 +118,64 @@ prontas `bg`, `text`, `border`, `soft`. `STATUS_STYLES` define as cores dos stat
 - `NIVEIS` e `nivelDe(xp)`: nível atual, próximo nível e progresso.
 - `CONQUISTAS`: calculadas a partir do perfil (função `teste`), não ficam salvas no banco.
 - O foguinho usa as datas de `src/lib/datas.js` (fuso de Brasília).
-- **Todo XP é concedido pela API**, nunca pelo navegador.
+- O XP é concedido em `src/lib/servicos.js`. As regras do Firestore limitam o ganho a no máximo +50 por
+  gravação (dificulta trapaça, mas não impede totalmente — não há servidor).
 
-## 9. API e autenticação
+## 9. Dados, API REST e segurança
 
-- O navegador chama a API com `chamarApi()` do `useAuth()`, que envia
-  `Authorization: Bearer <token do Firebase>`.
-- No servidor, `usuarioDaRequisicao(request)` valida o token e devolve `{ uid, email, nome }`.
-- Erros sempre no formato `{ "message": "texto para o usuário" }` com o status HTTP correto.
-- Nunca devolva dados privados (ex.: e-mail) em rotas públicas — veja `missaoPublica` e `perfilPublico`.
+- **Páginas nunca falam com o Firestore direto**: sempre chamam as funções de `src/lib/servicos.js`.
+- **Missões usam a API REST do Firestore** (`https://firestore.googleapis.com/v1/...`), por
+  `src/lib/firestoreRest.js`, com o token do usuário logado no cabeçalho `Authorization`:
 
-| Rota | Métodos | Login |
-|---|---|---|
-| `/api/missoes` | `GET` lista · `POST` cria · `PATCH ?id=` engajar/concluir · `DELETE ?id=` (só o criador) | GET público; demais exigem |
-| `/api/missoes/[id]` | `GET` uma missão e seus membros · `PUT` editar (só o criador) | GET público; PUT exige |
-| `/api/imagens` | `POST` envia foto de perfil, banner ou capa (devolve o `id`) | Exige |
-| `/api/imagens/[id]` | `GET` devolve a imagem como arquivo (com cache) | Público |
-| `/api/missoes/[id]/mensagens` | `POST` envia mensagem/imagem · `DELETE ?mensagem=` apaga a própria | Exige (e ser membro) |
-| `/api/perfil` | `GET` próprio perfil · `PATCH` editar | Exige |
-| `/api/perfil/checkin` | `POST` acesso do dia (cria o perfil no 1º login) | Exige |
-| `/api/ranking` | `GET` top 20 por XP | Público |
-| `/api/estatisticas` | `GET` números da página inicial | Público |
+| Função (servicos.js) | Verbo HTTP | O que faz | Quem pode |
+|---|---|---|---|
+| `listarMissoes()` | `GET` | lista as missões | todos |
+| `obterMissao(id)` | `GET` | uma missão + membros | todos |
+| `criarMissao(form, capa, perfil)` | `POST` | registra a denúncia (+20 XP) | logado |
+| `editarMissao(id, campos, atual)` | `PATCH` | edita título, anel, local, prazo, descrição, capa | só o dono |
+| `excluirMissao(id, atual)` | `DELETE` | exclui (devolve o XP da criação) | só o dono |
 
-Coleções do Firestore: `missoes` (com a subcoleção `mensagens` do chat), `usuarios` e `imagens`.
+- O resto usa o SDK do Firebase: `checkin`, `editarPerfil`, `acaoMissao` (engajar/concluir), `ranking`,
+  `estatisticas`, `enviarMensagem`, `apagarMensagem`, `enviarImagem`, `carregarImagem`.
+- Erros sempre como `Error` com mensagem em português para mostrar ao usuário.
 
-### Imagens (foto de perfil, banner e capa de missão)
+### Regras de segurança (`firestore.rules`)
 
-- Formatos e limites em `FORMATOS_IMAGEM` (`src/lib/imagens.js`); a compressão acontece no navegador.
-- Cada imagem é um documento em `imagens` e é exibida por `urlImagem(id)` → `/api/imagens/<id>`.
-  Perfis e missões guardam só o id (`avatarId`, `bannerId`, `capaId`), então as listas continuam leves.
-- Em formulários, use `salvarImagemSeNova(chamarApi, valor, idAtual, formato)`: envia só se a imagem mudou.
-- A API só aceita imagens do próprio usuário e apaga a antiga ao trocar ou remover.
+Como não há servidor, **a segurança está nas regras**. Ao criar um campo ou coleção nova, atualize-as:
 
-### Prazo e edição de missão
+- `usuarios`: leitura pública (sem e-mail); cada um só grava o próprio perfil; XP sobe no máximo +50 por vez.
+- `missoes`: leitura pública; só o dono edita/exclui; outros só mexem em `participantIds`,
+  `participants` e `concluidoPor` (entrar/concluir).
+- `missoes/{id}/contatos`: e-mail de quem denunciou — só o dono lê.
+- `missoes/{id}/mensagens`: só membros (criador + participantes) leem e escrevem.
+- `imagens`: leitura pública; cada um só cria/apaga as próprias.
 
-- `prazo` é opcional (AAAA-MM-DD). `infoPrazo` (texto/situação) e `erroPrazo`/`validarCamposMissao`
-  ficam em `src/lib/missoes.js` e valem para o formulário e para a API.
-- Depois do prazo, ninguém mais entra na missão (a API bloqueia); quem já entrou ainda pode concluir.
-- Só o criador edita (`PUT /api/missoes/[id]`) e exclui a missão.
+Coleções: `missoes` (subcoleções `mensagens` e `contatos`), `usuarios` e `imagens`.
 
 ### Chat da missão
 
-- Membros da missão = criador + participantes (`ehMembro` em `src/lib/missoes.js`). Só eles leem e escrevem.
-- **Leitura em tempo real** direto do Firestore no navegador (`onSnapshot`, últimas 80 mensagens);
-  **envio e exclusão sempre pela API**, que valida login, membro e tamanho.
-- Imagens são comprimidas no navegador (até 1280px, JPEG) e salvas em base64 na própria mensagem,
-  porque o Firebase Storage exige o plano Blaze. Limites em `CHAT` (`src/lib/missoes.js`).
-- Mensagem apagada continua na conversa como "Mensagem apagada" (campo `apagada: true`).
+- Leitura em tempo real (`onSnapshot`, últimas 80 mensagens) em `ChatMissao`; envio e exclusão por
+  `enviarMensagem` / `apagarMensagem`. Mensagem apagada fica como "Mensagem apagada".
+- Imagens do chat vão comprimidas (base64) na própria mensagem. Limites em `CHAT` (`src/lib/missoes.js`).
+
+### Imagens (foto de perfil, banner e capa)
+
+- Formatos e limites em `FORMATOS_IMAGEM` (`src/lib/imagens.js`); compressão no navegador.
+- Cada imagem é um documento em `imagens`; perfis e missões guardam só o id (`avatarId`, `bannerId`, `capaId`).
+- Para exibir, use o componente `ImagemSalva` (carrega com cache). Em formulários, o valor do
+  `SeletorImagem` é o id salvo, um data URL novo ou `null`; `salvarImagemSeNova` resolve o id final.
+
+### Prazo e edição de missão
+
+- `prazo` opcional (AAAA-MM-DD); `infoPrazo`, `erroPrazo` e `validarCamposMissao` em `src/lib/missoes.js`.
+- Depois do prazo ninguém mais entra na missão; quem já entrou ainda pode concluir.
+
+### Publicar no Firebase (gratuito)
+
+```
+npm run build
+firebase deploy --only hosting,firestore:rules
+```
 
 ## 10. Acessibilidade (meta: WCAG AA e Lighthouse acima de 90)
 

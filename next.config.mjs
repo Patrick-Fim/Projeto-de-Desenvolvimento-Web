@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  /* config options here */
+  // Gera um site estático (pasta out/) para o Firebase Hosting gratuito.
+  output: 'export',
+  images: { unoptimized: true },
   reactCompiler: true,
 };
 

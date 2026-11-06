@@ -1,5 +1,5 @@
 import { getRing } from '../lib/rings';
-import { urlImagem } from '../lib/imagens';
+import ImagemSalva from './ImagemSalva';
 
 const TAMANHOS = {
   sm: 'h-8 w-8 text-xs',
@@ -14,9 +14,8 @@ export default function Avatar({ nome = '', anel, fotoId, tamanho = 'md', classN
 
   if (fotoId) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={urlImagem(fotoId)}
+      <ImagemSalva
+        id={fotoId}
         alt=""
         aria-hidden="true"
         className={`inline-block shrink-0 rounded-full object-cover ring-2 ring-background ${ring.bg} ${TAMANHOS[tamanho]} ${className}`}

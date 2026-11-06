@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import {
   FaArrowLeft,
   FaLocationDot,
@@ -18,19 +18,20 @@ import {
   FaPenToSquare,
   FaCalendarXmark,
 } from 'react-icons/fa6';
-import { useAuth } from '../../../context/AuthContext';
-import { RINGS, getRing, STATUS_STYLES } from '../../../lib/rings';
-import { XP, nivelDe } from '../../../lib/gamificacao';
-import { ehMembro, totalProtetores, infoPrazo, validarCamposMissao } from '../../../lib/missoes';
-import { urlImagem, salvarImagemSeNova } from '../../../lib/imagens';
-import { hoje } from '../../../lib/datas';
-import Button from '../../../components/Button';
-import Avatar from '../../../components/Avatar';
-import Modal from '../../../components/Modal';
-import Campo, { classeCampo, a11yCampo } from '../../../components/Campo';
-import SeletorImagem from '../../../components/SeletorImagem';
-import SeloPrazo from '../../../components/SeloPrazo';
-import ChatMissao from '../../../components/ChatMissao';
+import { useAuth } from '../../context/AuthContext';
+import { RINGS, getRing, STATUS_STYLES } from '../../lib/rings';
+import { XP, nivelDe } from '../../lib/gamificacao';
+import { ehMembro, totalProtetores, infoPrazo, validarCamposMissao } from '../../lib/missoes';
+import { obterMissao, editarMissao, excluirMissao, acaoMissao } from '../../lib/servicos';
+import ImagemSalva from '../../components/ImagemSalva';
+import { hoje } from '../../lib/datas';
+import Button from '../../components/Button';
+import Avatar from '../../components/Avatar';
+import Modal from '../../components/Modal';
+import Campo, { classeCampo, a11yCampo } from '../../components/Campo';
+import SeletorImagem from '../../components/SeletorImagem';
+import SeloPrazo from '../../components/SeloPrazo';
+import ChatMissao from '../../components/ChatMissao';
 
 // Formulário de edição da missão (só o criador vê). Usa os mesmos campos e regras da criação.
 function FormEditarMissao({ missao, onSalvar, onCancelar }) {
@@ -40,7 +41,7 @@ function FormEditarMissao({ missao, onSalvar, onCancelar }) {
     location: missao.location || '',
     prazo: missao.prazo || '',
     description: missao.description || '',
-    capa: urlImagem(missao.capaId),
+    capa: missao.capaId || null,
   });
   const [erros, setErros] = useState({});
   const [erroApi, setErroApi] = useState('');
@@ -132,9 +133,13 @@ function FormEditarMissao({ missao, onSalvar, onCancelar }) {
 }
 
 export default function MissaoPage() {
-  const { id } = useParams();
+  // O id vem da URL (/missao?id=...), lido no navegador porque o site é estático.
+  const [id, setId] = useState(null);
+  useEffect(() => {
+    setId(new URLSearchParams(window.location.search).get('id') || '');
+  }, []);
   const router = useRouter();
-  const { usuario, perfil, setPerfil, chamarApi } = useAuth();
+  const { usuario, perfil, setPerfil } = useAuth();
 
   const [dados, setDados] = useState(null);
   const [carregando, setCarregando] = useState(true);
@@ -152,15 +157,14 @@ export default function MissaoPage() {
   // Busca a missão e seus membros na API.
   const carregar = useCallback(async () => {
     try {
-      const res = await fetch(`/api/missoes/${id}`);
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json.message || 'Falha ao carregar a missão.');
-      setDados(json);
+      if (id === null) return;
+      if (!id) throw new Error('Missão não encontrada.');
+      setDados(await obterMissao(id));
       setErro('');
     } catch (err) {
       setErro(err.message);
     } finally {
-      setCarregando(false);
+      if (id !== null) setCarregando(false);
     }
   }, [id]);
 
@@ -173,7 +177,7 @@ export default function MissaoPage() {
     try {
       setSalvando(true);
       const nivelAntes = nivelDe(perfil?.xp).numero;
-      const resposta = await chamarApi(`/api/missoes?id=${id}`, { method: 'PATCH', body: { acao } });
+      const resposta = await acaoMissao(id, acao);
       setPerfil(resposta.perfil);
       await carregar();
 
@@ -195,7 +199,7 @@ export default function MissaoPage() {
   const excluir = async () => {
     try {
       setSalvando(true);
-      const resposta = await chamarApi(`/api/missoes?id=${id}`, { method: 'DELETE' });
+      const resposta = await excluirMissao(id, dados.missao);
       if (resposta.perfil) setPerfil(resposta.perfil);
       router.push('/missoes');
     } catch (err) {
@@ -236,13 +240,9 @@ export default function MissaoPage() {
   const encerrada = infoPrazo(missao.prazo)?.encerrada;
   const fotosMembros = Object.fromEntries(membros.map((m) => [m.uid, m.avatarId]));
 
-  // Salva a edição: envia a capa nova (se houver) e os campos pelo PUT.
+  // Salva a edição: envia a capa nova (se houver) e os campos pelo PATCH da API REST.
   const salvarEdicao = async ({ capa, ...campos }) => {
-    const capaId = await salvarImagemSeNova(chamarApi, capa, missao.capaId, 'capa');
-    await chamarApi(`/api/missoes/${id}`, {
-      method: 'PUT',
-      body: { ...campos, prazo: campos.prazo || null, capaId },
-    });
+    await editarMissao(id, { ...campos, capa }, missao);
     await carregar();
     setEditando(false);
     mostrarToast('success', 'Missão atualizada!');
@@ -253,7 +253,7 @@ export default function MissaoPage() {
   if (!usuario) {
     acaoPrincipal = (
       <Link
-        href={`/login?voltar=/missoes/${id}`}
+        href={`/login?voltar=${encodeURIComponent(`/missao?id=${id}`)}`}
         className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-dark px-5 py-2.5 text-sm font-bold text-white hover:brightness-110 dark:text-slate-950"
       >
         <FaRightToBracket aria-hidden="true" /> Entre para participar
@@ -297,8 +297,7 @@ export default function MissaoPage() {
       <section className="relative overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
         {/* Banner da missão (capa) e faixa com a cor do anel */}
         {missao.capaId && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={urlImagem(missao.capaId)} alt="" aria-hidden="true" className="h-48 w-full object-cover md:h-64" />
+          <ImagemSalva id={missao.capaId} aria-hidden="true" className="h-48 w-full object-cover md:h-64" />
         )}
         <span className={`block h-2 w-full ${ring.bg}`} aria-hidden="true" />
         <div className="p-6 md:p-8">
@@ -357,7 +356,6 @@ export default function MissaoPage() {
           missaoId={id}
           podeParticipar={membro}
           usuarioUid={usuario?.uid}
-          chamarApi={chamarApi}
           totalMembros={membros.length}
           fotosMembros={fotosMembros}
           acaoBloqueado={acaoPrincipal}

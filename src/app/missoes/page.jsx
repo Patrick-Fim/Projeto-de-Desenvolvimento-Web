@@ -11,6 +11,7 @@ import { XP, nivelDe } from '../../lib/gamificacao';
 import { totalProtetores, infoPrazo } from '../../lib/missoes';
 import SeloPrazo from '../../components/SeloPrazo';
 import { useAuth } from '../../context/AuthContext';
+import { listarMissoes, excluirMissao, acaoMissao } from '../../lib/servicos';
 import {
   FaHandshake,
   FaFlagCheckered,
@@ -32,7 +33,7 @@ import {
 const FILTROS = [{ id: 'todos', label: 'Todos os Anéis' }, ...RINGS];
 
 export default function MissoesPage() {
-  const { usuario, perfil, setPerfil, chamarApi } = useAuth();
+  const { usuario, perfil, setPerfil } = useAuth();
   const [acaoEmAndamento, setAcaoEmAndamento] = useState(false);
 
   // Estados da lista, da busca e dos feedbacks das operações.
@@ -57,11 +58,8 @@ export default function MissoesPage() {
     try {
       setLoading(true);
       setError('');
-      // Consulta a API local para obter as missões cadastradas.
-      const res = await fetch('/api/missoes');
-      if (!res.ok) throw new Error('Falha ao carregar as missões');
-      const data = await res.json();
-      setMissoes(data);
+      // GET na API REST do Firestore.
+      setMissoes(await listarMissoes());
     } catch (err) {
       setError(err.message);
     } finally {
@@ -96,7 +94,7 @@ export default function MissoesPage() {
   const handleDeleteMission = async (id) => {
     try {
       // Exclui a ocorrência (só o criador pode) e atualiza a lista após a resposta da API.
-      const resposta = await chamarApi(`/api/missoes?id=${id}`, { method: 'DELETE' });
+      const resposta = await excluirMissao(id, missoes.find((m) => m.id === id));
       if (resposta.perfil) setPerfil(resposta.perfil);
 
       setIsModalOpen(false);
@@ -114,10 +112,7 @@ export default function MissoesPage() {
     try {
       setAcaoEmAndamento(true);
       const nivelAntes = nivelDe(perfil?.xp).numero;
-      const resposta = await chamarApi(`/api/missoes?id=${selectedMission.id}`, {
-        method: 'PATCH',
-        body: { acao },
-      });
+      const resposta = await acaoMissao(selectedMission.id, acao);
 
       setPerfil(resposta.perfil);
       setMissoes((lista) => lista.map((m) => (m.id === resposta.missao.id ? resposta.missao : m)));
@@ -320,7 +315,7 @@ export default function MissoesPage() {
             <p className="text-sm leading-relaxed text-foreground-muted">{selectedMission.description}</p>
 
             <Link
-              href={`/missoes/${selectedMission.id}`}
+              href={`/missao?id=${selectedMission.id}`}
               className="inline-flex items-center gap-2 text-sm font-bold text-primary-text hover:underline"
             >
               Abrir a página da missão e o chat

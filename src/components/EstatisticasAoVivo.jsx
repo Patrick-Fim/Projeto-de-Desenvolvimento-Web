@@ -1,13 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { estatisticas } from '../lib/servicos';
 
 // Uma única busca compartilhada pelos componentes da página (renovada a cada 15 s).
 let buscaEmAndamento = null;
 function buscarEstatisticas() {
   if (!buscaEmAndamento) {
-    buscaEmAndamento = fetch('/api/estatisticas')
-      .then((res) => (res.ok ? res.json() : Promise.reject(new Error('Falha'))))
+    buscaEmAndamento = estatisticas()
       .finally(() => setTimeout(() => { buscaEmAndamento = null; }, 15000));
   }
   return buscaEmAndamento;

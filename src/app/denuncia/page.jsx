@@ -11,7 +11,7 @@ import PageHeader from '../../components/PageHeader';
 import { RINGS, getRing } from '../../lib/rings';
 import Campo, { classeCampo } from '../../components/Campo';
 import SeletorImagem from '../../components/SeletorImagem';
-import { salvarImagemSeNova } from '../../lib/imagens';
+import { criarMissao } from '../../lib/servicos';
 import { erroPrazo } from '../../lib/missoes';
 import { hoje } from '../../lib/datas';
 import {
@@ -46,7 +46,7 @@ const inputClass = classeCampo;
 
 export default function DenunciaPage() {
   const router = useRouter();
-  const { usuario, perfil, carregando, chamarApi, setPerfil } = useAuth();
+  const { usuario, perfil, carregando, setPerfil } = useAuth();
   // Dados da missão recém-criada, usados pela animação de celebração.
   const [celebracao, setCelebracao] = useState(null);
 
@@ -61,7 +61,7 @@ export default function DenunciaPage() {
     setFormData((anterior) => ({
       ...anterior,
       reporterName: anterior.reporterName || perfil.nome || '',
-      reporterEmail: anterior.reporterEmail || perfil.email || '',
+      reporterEmail: anterior.reporterEmail || usuario?.email || '',
     }));
   }, [perfil]);
   const [errors, setErrors] = useState({});
@@ -143,12 +143,8 @@ export default function DenunciaPage() {
 
     try {
       setSubmitting(true);
-      // Envia a capa (se houver) e depois os dados validados para a API de missões.
-      const capaId = await salvarImagemSeNova(chamarApi, capa, null, 'capa');
-      const resposta = await chamarApi('/api/missoes', {
-        method: 'POST',
-        body: { ...formData, prazo: formData.prazo || null, capaId },
-      });
+      // Envia a capa (se houver) e cria a missão pelo POST da API REST do Firestore.
+      const resposta = await criarMissao(formData, capa, perfil);
       setPerfil(resposta.perfil);
 
       // Comemora com a animação do anel e depois leva ao painel, destacando a missão nova.
@@ -164,7 +160,7 @@ export default function DenunciaPage() {
       setFormData({
         ...ESTADO_INICIAL,
         reporterName: perfil?.nome || '',
-        reporterEmail: perfil?.email || '',
+        reporterEmail: usuario?.email || '',
       });
       setCapa(null);
       setErrors({});

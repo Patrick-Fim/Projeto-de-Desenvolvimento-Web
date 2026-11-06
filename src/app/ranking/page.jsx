@@ -9,6 +9,7 @@ import Foguinho from '../../components/Foguinho';
 import Button from '../../components/Button';
 import { useAuth } from '../../context/AuthContext';
 import { nivelDe } from '../../lib/gamificacao';
+import { ranking as buscarRanking } from '../../lib/servicos';
 
 // Cores do pódio: ouro, prata e bronze.
 const PODIO = [
@@ -27,9 +28,7 @@ export default function RankingPage() {
     try {
       setCarregando(true);
       setErro('');
-      const res = await fetch('/api/ranking');
-      if (!res.ok) throw new Error('Falha ao carregar o ranking.');
-      setRanking(await res.json());
+      setRanking(await buscarRanking());
     } catch (err) {
       setErro(err.message);
     } finally {

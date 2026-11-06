@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import { FaImage, FaTrash, FaTriangleExclamation } from 'react-icons/fa6';
 import { comprimirImagem } from '../lib/imagens';
 import Button from './Button';
+import ImagemSalva from './ImagemSalva';
 
 // Formato da pré-visualização de cada tipo de imagem.
 const MOLDURAS = {
@@ -13,7 +14,7 @@ const MOLDURAS = {
 };
 
 // Escolha de imagem com pré-visualização e compressão automática.
-// valor: URL da imagem atual, data URL da imagem nova ou null (sem imagem).
+// valor: id da imagem já salva, data URL da imagem nova ou null (sem imagem).
 export default function SeletorImagem({ id, rotulo, formato = 'capa', valor, onChange, dica }) {
   const inputRef = useRef(null);
   const [processando, setProcessando] = useState(false);
@@ -39,9 +40,11 @@ export default function SeletorImagem({ id, rotulo, formato = 'capa', valor, onC
 
       <div className={`flex gap-4 ${redondo ? 'items-center' : 'flex-col'}`}>
         <div className={`relative overflow-hidden border border-border bg-background ${MOLDURAS[formato]}`}>
-          {valor ? (
+          {valor?.startsWith('data:') ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={valor} alt={`Pré-visualização: ${rotulo}`} className="h-full w-full object-cover" />
+          ) : valor ? (
+            <ImagemSalva id={valor} alt={`Pré-visualização: ${rotulo}`} className="h-full w-full object-cover" />
           ) : (
             <span className="flex h-full w-full items-center justify-center text-foreground-muted">
               <FaImage aria-hidden="true" className="text-2xl" />

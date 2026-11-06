@@ -2,7 +2,7 @@ import Link from 'next/link';
 import Button from './Button';
 import { getRing, STATUS_STYLES } from '../lib/rings';
 import { totalProtetores } from '../lib/missoes';
-import { urlImagem } from '../lib/imagens';
+import ImagemSalva from './ImagemSalva';
 import SeloPrazo from './SeloPrazo';
 import { FaLocationDot, FaUsers, FaArrowRight, FaCircleCheck, FaHandshake, FaUserPen, FaCircleInfo } from 'react-icons/fa6';
 
@@ -30,8 +30,7 @@ export default function MissionCard({ mission, onSelectMission, estadoUsuario, d
     >
       {/* Capa da missão (opcional) e faixa com a cor do anel */}
       {capaId && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={urlImagem(capaId)} alt="" aria-hidden="true" loading="lazy" className="h-36 w-full object-cover" />
+        <ImagemSalva id={capaId} aria-hidden="true" className="h-36 w-full object-cover" />
       )}
       <span className={`h-1.5 w-full ${currentRing.bg}`} aria-hidden="true" />
 
@@ -96,7 +95,7 @@ export default function MissionCard({ mission, onSelectMission, estadoUsuario, d
           </Button>
           {/* Página da missão, com o chat dos participantes */}
           <Link
-            href={`/missoes/${mission.id}`}
+            href={`/missao?id=${mission.id}`}
             aria-label={`Entrar na missão ${title}`}
             className="inline-flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-primary-dark px-3.5 py-2 text-sm font-semibold text-white shadow-sm shadow-primary/20 transition hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card dark:text-slate-950"
           >

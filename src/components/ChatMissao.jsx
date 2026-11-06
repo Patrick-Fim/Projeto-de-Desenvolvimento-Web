@@ -15,6 +15,8 @@ import { db } from '../lib/firebase';
 import { hoje, diaAnterior } from '../lib/datas';
 import { CHAT } from '../lib/missoes';
 import { comprimirImagem } from '../lib/imagens';
+import { enviarMensagem, apagarMensagem } from '../lib/servicos';
+import { useAuth } from '../context/AuthContext';
 import BolhaMensagem from './BolhaMensagem';
 
 const FUSO = 'America/Sao_Paulo';
@@ -42,11 +44,11 @@ export default function ChatMissao({
   missaoId,
   podeParticipar,
   usuarioUid,
-  chamarApi,
   totalMembros,
   acaoBloqueado,
   fotosMembros = {},
 }) {
+  const { perfil } = useAuth();
   const [mensagens, setMensagens] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erroConversa, setErroConversa] = useState('');
@@ -146,10 +148,7 @@ export default function ChatMissao({
     try {
       setEnviando(true);
       setErroEnvio('');
-      await chamarApi(`/api/missoes/${missaoId}/mensagens`, {
-        method: 'POST',
-        body: { texto: conteudo, imagem },
-      });
+      await enviarMensagem(missaoId, { texto: conteudo, imagem }, perfil);
       setTexto('');
       setImagem(null);
       pertoDoFim.current = true;
@@ -166,7 +165,7 @@ export default function ChatMissao({
 
   const apagar = async (idMensagem) => {
     try {
-      await chamarApi(`/api/missoes/${missaoId}/mensagens?mensagem=${idMensagem}`, { method: 'DELETE' });
+      await apagarMensagem(missaoId, idMensagem);
     } catch (err) {
       setErroEnvio(err.message);
     } finally {
