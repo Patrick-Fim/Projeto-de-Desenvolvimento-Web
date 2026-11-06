@@ -75,6 +75,8 @@ Opacidade: use o modificador do Tailwind (`bg-primary/10`, `border-accent/30`).
 | `Foguinho` | Dias seguidos de acesso | `dias`, `grande` |
 | `Logo` | Marca (cabeçalho e rodapé) | — |
 | `AsciiGlobe` | Planeta em ASCII girando (canvas) | `className` |
+| `CelebracaoAnel` | Animação em tela cheia ao criar missão (partículas próprias de cada anel) | `anel`, `titulo`, `xp`, `onFim` |
+| `ChatMissao` | Chat em tempo real da missão, com envio de imagens | `missaoId`, `podeParticipar`, `usuarioUid`, `chamarApi`, `totalMembros`, `acaoBloqueado` |
 | `ScrollToTop` | Botão "voltar ao topo" | — |
 
 Padrões visuais recorrentes: cartões `rounded-2xl border border-border bg-card shadow-sm`,
@@ -106,12 +108,23 @@ prontas `bg`, `text`, `border`, `soft`. `STATUS_STYLES` define as cores dos stat
 | Rota | Métodos | Login |
 |---|---|---|
 | `/api/missoes` | `GET` lista · `POST` cria · `PATCH ?id=` engajar/concluir · `DELETE ?id=` (só o criador) | GET público; demais exigem |
+| `/api/missoes/[id]` | `GET` uma missão e seus membros | Público |
+| `/api/missoes/[id]/mensagens` | `POST` envia mensagem/imagem · `DELETE ?mensagem=` apaga a própria | Exige (e ser membro) |
 | `/api/perfil` | `GET` próprio perfil · `PATCH` editar | Exige |
 | `/api/perfil/checkin` | `POST` acesso do dia (cria o perfil no 1º login) | Exige |
 | `/api/ranking` | `GET` top 20 por XP | Público |
 | `/api/estatisticas` | `GET` números da página inicial | Público |
 
-Coleções do Firestore: `missoes` e `usuarios`.
+Coleções do Firestore: `missoes` (com a subcoleção `mensagens` do chat) e `usuarios`.
+
+### Chat da missão
+
+- Membros da missão = criador + participantes (`ehMembro` em `src/lib/missoes.js`). Só eles leem e escrevem.
+- **Leitura em tempo real** direto do Firestore no navegador (`onSnapshot`, últimas 80 mensagens);
+  **envio e exclusão sempre pela API**, que valida login, membro e tamanho.
+- Imagens são comprimidas no navegador (até 1280px, JPEG) e salvas em base64 na própria mensagem,
+  porque o Firebase Storage exige o plano Blaze. Limites em `CHAT` (`src/lib/missoes.js`).
+- Mensagem apagada continua na conversa como "Mensagem apagada" (campo `apagada: true`).
 
 ## 10. Acessibilidade (meta: WCAG AA e Lighthouse acima de 90)
 
