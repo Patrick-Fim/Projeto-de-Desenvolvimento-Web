@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import Button from './Button';
 import { getRing, STATUS_STYLES } from '../lib/rings';
 import { FaLocationDot, FaUsers, FaArrowRight, FaCircleCheck, FaHandshake, FaUserPen } from 'react-icons/fa6';
@@ -69,16 +70,25 @@ export default function MissionCard({ mission, onSelectMission, estadoUsuario, d
           </span>
         </div>
 
-        <Button
-          variant="primary"
-          size="sm"
-          className="mt-4 w-full"
-          onClick={() => onSelectMission && onSelectMission(mission)}
-          ariaLabel={`Ver detalhes da missão ${title}`}
-        >
-          Ver detalhes
-          <FaArrowRight aria-hidden="true" className="transition-transform group-hover:translate-x-0.5" />
-        </Button>
+        <div className="mt-4 flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onSelectMission && onSelectMission(mission)}
+            ariaLabel={`Ver detalhes da missão ${title}`}
+          >
+            Detalhes
+          </Button>
+          {/* Página da missão, com o chat dos participantes */}
+          <Link
+            href={`/missoes/${mission.id}`}
+            aria-label={`Entrar na missão ${title}`}
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary-dark px-3.5 py-2 text-sm font-semibold text-white shadow-sm shadow-primary/20 transition hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card dark:text-slate-950"
+          >
+            Entrar na missão
+            <FaArrowRight aria-hidden="true" className="transition-transform group-hover:translate-x-0.5" />
+          </Link>
+        </div>
       </div>
     </article>
   );

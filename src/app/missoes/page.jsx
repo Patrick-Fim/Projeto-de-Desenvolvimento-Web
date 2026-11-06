@@ -23,6 +23,7 @@ import {
   FaSeedling,
   FaXmark,
   FaTrash,
+  FaArrowRight,
 } from 'react-icons/fa6';
 
 // Opções disponíveis para filtrar as ocorrências pelo Anel Elemental.
@@ -314,6 +315,14 @@ export default function MissoesPage() {
             </span>
 
             <p className="text-sm leading-relaxed text-foreground-muted">{selectedMission.description}</p>
+
+            <Link
+              href={`/missoes/${selectedMission.id}`}
+              className="inline-flex items-center gap-2 text-sm font-bold text-primary-text hover:underline"
+            >
+              Abrir a página da missão e o chat
+              <FaArrowRight aria-hidden="true" />
+            </Link>
 
             <dl className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               {[
