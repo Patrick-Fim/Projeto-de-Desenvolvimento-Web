@@ -7,6 +7,18 @@ import Modal from '../../components/Modal';
 import PageHeader from '../../components/PageHeader';
 import CelebracaoAnel from '../../components/CelebracaoAnel';
 import AvisoConquista from '../../components/AvisoConquista';
+import BolhaMensagem from '../../components/BolhaMensagem';
+import SeletorImagem from '../../components/SeletorImagem';
+import SeloPrazo from '../../components/SeloPrazo';
+import Campo, { classeCampo, a11yCampo } from '../../components/Campo';
+import { hoje, diaAnterior } from '../../lib/datas';
+
+// Datas de exemplo para o selo de prazo (relativas a hoje).
+const diasAFrente = (n) => {
+  const data = new Date(`${hoje()}T12:00:00Z`);
+  data.setUTCDate(data.getUTCDate() + n);
+  return data.toISOString().slice(0, 10);
+};
 import { CONQUISTAS } from '../../lib/gamificacao';
 import { RINGS } from '../../lib/rings';
 
@@ -50,6 +62,10 @@ export default function ComponentesPage() {
   const [anelCelebracao, setAnelCelebracao] = useState(null);
   // Conquista em demonstração (índice em CONQUISTAS; null = nenhuma).
   const [conquistaDemo, setConquistaDemo] = useState(null);
+  // Imagens escolhidas nos seletores de demonstração.
+  const [demoAvatar, setDemoAvatar] = useState(null);
+  const [demoBanner, setDemoBanner] = useState(null);
+  const [demoCampo, setDemoCampo] = useState('');
 
   const handleOpenModal = (mission) => {
     // Guarda a missão escolhida antes de abrir seus detalhes.
@@ -182,6 +198,59 @@ export default function ComponentesPage() {
         >
           Simular conquista
         </Button>
+      </section>
+
+      {/* Teste 6: Bolhas do chat */}
+      <section className="space-y-4 bg-card p-6 rounded-2xl border border-border shadow-sm">
+        <h2 className="text-2xl font-bold text-foreground [overflow-wrap:anywhere]">6. Componente BolhaMensagem (`src/components/BolhaMensagem.jsx`)</h2>
+        <p className="text-sm text-foreground-muted">
+          Mensagens do chat da missão: texto, foto com legenda (largura fixa, estilo WhatsApp), foto sem legenda e mensagem apagada.
+        </p>
+        <div className="rounded-xl border border-border bg-background p-4">
+          <BolhaMensagem
+            mensagem={{ autorNome: 'Ana Silva', autorAnel: 'agua', texto: 'Oi, pessoal! Bora marcar o mutirão para sábado?', criadoEm: '2026-11-05T13:02:00.000Z' }}
+          />
+          <BolhaMensagem
+            agrupada
+            mensagem={{ autorNome: 'Ana Silva', autorAnel: 'agua', imagem: '/ProTer1.png', criadoEm: '2026-11-05T13:03:00.000Z' }}
+          />
+          <BolhaMensagem
+            minha
+            mensagem={{ autorNome: 'Você', autorAnel: 'terra', imagem: '/ProTer2.png', texto: 'Fechado! Levo as luvas e os sacos de lixo.', criadoEm: '2026-11-05T13:05:00.000Z' }}
+          />
+          <BolhaMensagem
+            minha
+            agrupada
+            mensagem={{ autorNome: 'Você', autorAnel: 'terra', apagada: true, criadoEm: '2026-11-05T13:06:00.000Z' }}
+          />
+        </div>
+      </section>
+
+      {/* Teste 7: Formulários (Campo, SeletorImagem, SeloPrazo) */}
+      <section className="space-y-6 bg-card p-6 rounded-2xl border border-border shadow-sm">
+        <h2 className="text-2xl font-bold text-foreground [overflow-wrap:anywhere]">7. Formulários: Campo, SeletorImagem e SeloPrazo</h2>
+        <p className="text-sm text-foreground-muted">
+          Peças usadas em todos os formulários (perfil, denúncia e edição de missão). A imagem é comprimida no navegador antes de enviar.
+        </p>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          <SeletorImagem id="demo-avatar" rotulo="Foto de perfil (avatar)" formato="avatar" valor={demoAvatar} onChange={setDemoAvatar} />
+          <Campo id="demo-campo" label="Campo com validação" error={demoCampo && demoCampo.length < 5 ? 'Digite pelo menos 5 caracteres.' : ''} dica="Digite algo para ver a validação.">
+            <input id="demo-campo" value={demoCampo} onChange={(e) => setDemoCampo(e.target.value)} className={classeCampo(demoCampo && demoCampo.length < 5)} {...a11yCampo('demo-campo', demoCampo && demoCampo.length < 5)} />
+          </Campo>
+        </div>
+
+        <SeletorImagem id="demo-banner" rotulo="Banner" formato="banner" valor={demoBanner} onChange={setDemoBanner} />
+
+        <div>
+          <p className="text-sm font-bold text-foreground">Selo de prazo</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <SeloPrazo prazo={diasAFrente(12)} completo />
+            <SeloPrazo prazo={diasAFrente(2)} />
+            <SeloPrazo prazo={hoje()} />
+            <SeloPrazo prazo={diaAnterior(hoje())} />
+          </div>
+        </div>
       </section>
 
       {conquistaDemo !== null && (

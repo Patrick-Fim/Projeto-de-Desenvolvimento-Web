@@ -33,6 +33,10 @@ src/
 
 ## 3. Tokens de design (`src/styles/theme.css`)
 
+**Regra de ouro:** todo visual sai daqui (tokens) e de `src/components/` (componentes). Ao criar algo
+novo, primeiro crie o token ou o componente, depois use. Sempre atualize junto `/estilo`, `/componentes`
+e este documento — assim, mudar em um lugar muda a ferramenta inteira.
+
 **Nunca use cores fixas (hex) direto nos componentes.** Use as classes geradas pelos tokens.
 Para criar uma cor nova: declare a variável em `:root` e em `.dark`, e exponha no `@theme inline`
 como `--color-<nome>`. Isso gera `bg-<nome>`, `text-<nome>`, `border-<nome>` etc.
@@ -46,6 +50,12 @@ como `--color-<nome>`. Isso gera `bg-<nome>`, `text-<nome>`, `border-<nome>` etc
 | `--background` / `--card` / `--border` | Fundo da página, cartões, bordas | `bg-background`, `bg-card`, `border-border` |
 | `--danger-text` | Mensagens de erro (AA) | `text-danger-text` |
 | `--ring-earth`, `-fire`, `-wind`, `-water`, `-heart` | Cores dos 5 anéis | `bg-ring-earth`, `text-ring-fire`... |
+| `--bolha-propria` / `--bolha-propria-texto` | Bolha das minhas mensagens no chat | `bg-bolha-propria`, `text-bolha-propria-texto` |
+| `--bolha-outra` / `--bolha-outra-texto` | Bolha das mensagens dos outros | `bg-bolha-outra`, `text-bolha-outra-texto` |
+| `--scrollbar` / `--scrollbar-hover` | Barras de rolagem de toda a ferramenta (aplicadas em `globals.css`) | automático |
+
+`color-scheme` também é definido nos tokens (`light` / `dark`) para que controles nativos do
+navegador sigam o tema.
 
 Opacidade: use o modificador do Tailwind (`bg-primary/10`, `border-accent/30`).
 
@@ -71,13 +81,17 @@ Opacidade: use o modificador do Tailwind (`bg-primary/10`, `border-accent/30`).
 | `PageHeader` | Cabeçalho de toda página interna | `eyebrow`, `title`, `description` |
 | `Modal` | Diálogos (fecha com Esc e clique fora, foca o botão de fechar) | `isOpen`, `onClose`, `title` |
 | `MissionCard` | Cartão de missão | `mission`, `onSelectMission`, `estadoUsuario` (`criada`, `engajada`, `concluida`) |
-| `Avatar` | Iniciais na cor do anel favorito | `nome`, `anel`, `tamanho`: `sm`, `md`, `lg` |
+| `Avatar` | Foto de perfil ou, sem foto, iniciais na cor do anel favorito | `nome`, `anel`, `fotoId`, `tamanho`: `sm`, `md`, `lg`, `xl` |
+| `Campo` | Rótulo + campo + erro/dica de todo formulário. Exporta também `classeCampo(temErro)` e `a11yCampo(id, erro)` | `id`, `label`, `error`, `obrigatorio`, `dica` |
+| `SeletorImagem` | Escolher/trocar/remover imagem com pré-visualização e compressão automática | `id`, `rotulo`, `formato` (`avatar`, `banner`, `capa`), `valor`, `onChange`, `dica` |
+| `SeloPrazo` | Data limite da missão: "Faltam X dias", "Termina hoje", "Prazo encerrado" | `prazo` (AAAA-MM-DD), `completo` |
 | `Foguinho` | Dias seguidos de acesso | `dias`, `grande` |
 | `Logo` | Marca (cabeçalho e rodapé) | — |
 | `AsciiGlobe` | Planeta em ASCII girando (canvas) | `className` |
 | `CelebracaoAnel` | Animação em tela cheia ao criar missão (partículas próprias de cada anel) | `anel`, `titulo`, `xp`, `onFim` |
 | `AvisoConquista` | Cartão "Conquista desbloqueada!" no canto inferior direito, com confetes (`canvas-confetti`) | `conquista`, `onFechar` |
 | `NotificadorConquistas` | Montado no layout: detecta conquistas novas no perfil e mostra uma de cada vez (lembra as já comemoradas no `localStorage`) | — |
+| `BolhaMensagem` | Uma mensagem do chat (texto, foto com/sem legenda, apagada). Foto tem largura fixa, estilo WhatsApp | `mensagem`, `minha`, `agrupada`, `onAbrirImagem`, `onImagemCarregada`, `acoes` |
 | `ChatMissao` | Chat em tempo real da missão, com envio de imagens | `missaoId`, `podeParticipar`, `usuarioUid`, `chamarApi`, `totalMembros`, `acaoBloqueado` |
 | `ScrollToTop` | Botão "voltar ao topo" | — |
 
@@ -110,14 +124,31 @@ prontas `bg`, `text`, `border`, `soft`. `STATUS_STYLES` define as cores dos stat
 | Rota | Métodos | Login |
 |---|---|---|
 | `/api/missoes` | `GET` lista · `POST` cria · `PATCH ?id=` engajar/concluir · `DELETE ?id=` (só o criador) | GET público; demais exigem |
-| `/api/missoes/[id]` | `GET` uma missão e seus membros | Público |
+| `/api/missoes/[id]` | `GET` uma missão e seus membros · `PUT` editar (só o criador) | GET público; PUT exige |
+| `/api/imagens` | `POST` envia foto de perfil, banner ou capa (devolve o `id`) | Exige |
+| `/api/imagens/[id]` | `GET` devolve a imagem como arquivo (com cache) | Público |
 | `/api/missoes/[id]/mensagens` | `POST` envia mensagem/imagem · `DELETE ?mensagem=` apaga a própria | Exige (e ser membro) |
 | `/api/perfil` | `GET` próprio perfil · `PATCH` editar | Exige |
 | `/api/perfil/checkin` | `POST` acesso do dia (cria o perfil no 1º login) | Exige |
 | `/api/ranking` | `GET` top 20 por XP | Público |
 | `/api/estatisticas` | `GET` números da página inicial | Público |
 
-Coleções do Firestore: `missoes` (com a subcoleção `mensagens` do chat) e `usuarios`.
+Coleções do Firestore: `missoes` (com a subcoleção `mensagens` do chat), `usuarios` e `imagens`.
+
+### Imagens (foto de perfil, banner e capa de missão)
+
+- Formatos e limites em `FORMATOS_IMAGEM` (`src/lib/imagens.js`); a compressão acontece no navegador.
+- Cada imagem é um documento em `imagens` e é exibida por `urlImagem(id)` → `/api/imagens/<id>`.
+  Perfis e missões guardam só o id (`avatarId`, `bannerId`, `capaId`), então as listas continuam leves.
+- Em formulários, use `salvarImagemSeNova(chamarApi, valor, idAtual, formato)`: envia só se a imagem mudou.
+- A API só aceita imagens do próprio usuário e apaga a antiga ao trocar ou remover.
+
+### Prazo e edição de missão
+
+- `prazo` é opcional (AAAA-MM-DD). `infoPrazo` (texto/situação) e `erroPrazo`/`validarCamposMissao`
+  ficam em `src/lib/missoes.js` e valem para o formulário e para a API.
+- Depois do prazo, ninguém mais entra na missão (a API bloqueia); quem já entrou ainda pode concluir.
+- Só o criador edita (`PUT /api/missoes/[id]`) e exclui a missão.
 
 ### Chat da missão
 

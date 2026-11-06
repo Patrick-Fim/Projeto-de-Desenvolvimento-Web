@@ -17,6 +17,19 @@
 
   --danger-text: #B91C1C;        /* Mensagens de erro (WCAG AA) */
 
+  /* Chat: bolha das próprias mensagens e das mensagens dos outros */
+  --bolha-propria: #0077B6;
+  --bolha-propria-texto: #FFFFFF;
+  --bolha-outra: #FFFFFF;
+  --bolha-outra-texto: #03045E;
+
+  /* Barras de rolagem (finas, na cor do tema) */
+  --scrollbar: rgba(0, 119, 182, 0.35);
+  --scrollbar-hover: rgba(0, 119, 182, 0.6);
+
+  /* Faz os controles nativos do navegador (rolagem, campos) seguirem o tema */
+  color-scheme: light;
+
   /* Anéis Elementais */
   --ring-earth: #2E7D32;
   --ring-fire: #D62828;
@@ -47,6 +60,16 @@
 
   --danger-text: #FCA5A5;
 
+  --bolha-propria: #155E75;
+  --bolha-propria-texto: #F0F9FF;
+  --bolha-outra: #334155;
+  --bolha-outra-texto: #F8FAFC;
+
+  --scrollbar: rgba(144, 224, 239, 0.28);
+  --scrollbar-hover: rgba(144, 224, 239, 0.5);
+
+  color-scheme: dark;
+
   /* Anéis Elementais ajustados para o fundo escuro */
   --ring-earth: #10B981;
   --ring-fire: #EF4444;
@@ -68,6 +91,12 @@
   --color-card: var(--card);
   --color-border: var(--border);
   --color-danger-text: var(--danger-text);
+
+  --color-bolha-propria: var(--bolha-propria);
+  --color-bolha-propria-texto: var(--bolha-propria-texto);
+  --color-bolha-outra: var(--bolha-outra);
+  --color-bolha-outra-texto: var(--bolha-outra-texto);
+  --color-scrollbar: var(--scrollbar);
 
   --color-ring-earth: var(--ring-earth);
   --color-ring-fire: var(--ring-fire);

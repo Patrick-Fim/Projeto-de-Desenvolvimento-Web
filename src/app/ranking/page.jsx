@@ -95,7 +95,7 @@ export default function RankingPage() {
                     <span className={`mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br shadow-md ${estilo.cor}`}>
                       <Icon aria-hidden="true" />
                     </span>
-                    <Avatar nome={p.nome} anel={p.anel} tamanho="lg" className="mx-auto mt-4" />
+                    <Avatar nome={p.nome} anel={p.anel} fotoId={p.avatarId} tamanho="lg" className="mx-auto mt-4" />
                     <p className="mt-3 truncate font-bold text-foreground">{p.nome}{ehVoce && ' (você)'}</p>
                     <p className="text-xs font-semibold text-foreground-muted">{nivelDe(p.xp).nome}</p>
                     <p className="mt-2 font-display text-2xl font-black text-foreground">{p.xp} XP</p>
@@ -118,7 +118,7 @@ export default function RankingPage() {
                 return (
                   <li key={p.uid} className={`flex items-center gap-4 px-5 py-4 ${ehVoce ? 'bg-primary/5' : ''}`}>
                     <span className="w-8 text-center font-display text-lg font-black text-foreground-muted">{p.posicao}</span>
-                    <Avatar nome={p.nome} anel={p.anel} />
+                    <Avatar nome={p.nome} anel={p.anel} fotoId={p.avatarId} />
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-bold text-foreground">
                         {p.nome}

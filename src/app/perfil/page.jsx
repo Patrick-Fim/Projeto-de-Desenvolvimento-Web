@@ -28,6 +28,9 @@ import Avatar from '../../components/Avatar';
 import Foguinho from '../../components/Foguinho';
 import Button from '../../components/Button';
 import Modal from '../../components/Modal';
+import Campo, { classeCampo, a11yCampo } from '../../components/Campo';
+import SeletorImagem from '../../components/SeletorImagem';
+import { urlImagem, salvarImagemSeNova } from '../../lib/imagens';
 
 function CartaoNumero({ Icon, rotulo, valor, detalhe, cor = 'text-primary-text bg-primary/10' }) {
   return (
@@ -49,6 +52,9 @@ function FormEditarPerfil({ perfil, onSalvar, onCancelar }) {
     cidade: perfil.cidade || '',
     bio: perfil.bio || '',
     anel: perfil.anel || 'terra',
+    // Imagens: URL atual, data URL nova ou null (sem imagem).
+    avatar: urlImagem(perfil.avatarId),
+    banner: urlImagem(perfil.bannerId),
   });
   const [erros, setErros] = useState({});
   const [erroApi, setErroApi] = useState('');
@@ -79,11 +85,6 @@ function FormEditarPerfil({ perfil, onSalvar, onCancelar }) {
     }
   };
 
-  const classeCampo = (nome) =>
-    `w-full rounded-xl border bg-background px-4 py-3 text-sm text-foreground transition focus:outline-none focus:ring-2 focus:ring-primary/30 ${
-      erros[nome] ? 'border-danger-text' : 'border-border focus:border-primary'
-    }`;
-
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-5">
       {erroApi && (
@@ -92,28 +93,41 @@ function FormEditarPerfil({ perfil, onSalvar, onCancelar }) {
         </p>
       )}
 
-      <div className="space-y-1.5">
-        <label htmlFor="perfil-nome" className="text-sm font-bold text-foreground">Nome</label>
-        <input id="perfil-nome" name="nome" value={dados.nome} onChange={handleChange} className={classeCampo('nome')} aria-invalid={erros.nome ? true : undefined} aria-describedby={erros.nome ? 'perfil-nome-erro' : undefined} />
-        {erros.nome && <p id="perfil-nome-erro" className="text-xs font-semibold text-danger-text">{erros.nome}</p>}
-      </div>
+      <SeletorImagem
+        id="perfil-banner"
+        rotulo="Banner do perfil"
+        formato="banner"
+        valor={dados.banner}
+        onChange={(valor) => setDados((anterior) => ({ ...anterior, banner: valor }))}
+        dica="Imagem larga que aparece no topo do seu perfil."
+      />
 
-      <div className="space-y-1.5">
-        <label htmlFor="perfil-cidade" className="text-sm font-bold text-foreground">Cidade</label>
-        <input id="perfil-cidade" name="cidade" value={dados.cidade} onChange={handleChange} placeholder="Ex: Ijuí, RS" className={classeCampo('cidade')} aria-invalid={erros.cidade ? true : undefined} />
-        {erros.cidade && <p className="text-xs font-semibold text-danger-text">{erros.cidade}</p>}
-      </div>
+      <SeletorImagem
+        id="perfil-avatar"
+        rotulo="Foto de perfil"
+        formato="avatar"
+        valor={dados.avatar}
+        onChange={(valor) => setDados((anterior) => ({ ...anterior, avatar: valor }))}
+        dica="Sem foto, aparecem suas iniciais na cor do anel favorito."
+      />
 
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between">
-          <label htmlFor="perfil-bio" className="text-sm font-bold text-foreground">Bio</label>
-          <span className={`text-xs ${dados.bio.length > 160 ? 'font-bold text-danger-text' : 'text-foreground-muted'}`}>
-            {dados.bio.length}/160
-          </span>
-        </div>
-        <textarea id="perfil-bio" name="bio" rows="3" value={dados.bio} onChange={handleChange} placeholder="Conte o que te move na causa ambiental..." className={`${classeCampo('bio')} resize-none`} aria-invalid={erros.bio ? true : undefined} />
-        {erros.bio && <p className="text-xs font-semibold text-danger-text">{erros.bio}</p>}
-      </div>
+      <Campo id="perfil-nome" label="Nome" error={erros.nome}>
+        <input id="perfil-nome" name="nome" value={dados.nome} onChange={handleChange} className={classeCampo(erros.nome)} {...a11yCampo('perfil-nome', erros.nome)} />
+      </Campo>
+
+      <Campo id="perfil-cidade" label="Cidade" obrigatorio={false} error={erros.cidade}>
+        <input id="perfil-cidade" name="cidade" value={dados.cidade} onChange={handleChange} placeholder="Ex: Ijuí, RS" className={classeCampo(erros.cidade)} {...a11yCampo('perfil-cidade', erros.cidade)} />
+      </Campo>
+
+      <Campo
+        id="perfil-bio"
+        label="Bio"
+        obrigatorio={false}
+        error={erros.bio}
+        dica={`${dados.bio.length}/160 caracteres`}
+      >
+        <textarea id="perfil-bio" name="bio" rows="3" value={dados.bio} onChange={handleChange} placeholder="Conte o que te move na causa ambiental..." className={`${classeCampo(erros.bio)} resize-none`} {...a11yCampo('perfil-bio', erros.bio)} />
+      </Campo>
 
       <fieldset>
         <legend className="text-sm font-bold text-foreground">Anel favorito (cor do seu avatar)</legend>
@@ -191,8 +205,16 @@ export default function PerfilPage() {
   const emAndamento = missoes.filter((m) => engajadas.includes(m.id) && !concluidas.includes(m.id));
   const minhasDenuncias = missoes.filter((m) => m.creatorUid === usuario.uid);
 
-  const salvarPerfil = async (dados) => {
-    const atualizado = await chamarApi('/api/perfil', { method: 'PATCH', body: dados });
+  const salvarPerfil = async ({ avatar, banner, ...dados }) => {
+    // Envia primeiro as imagens novas; as que não mudaram mantêm o id atual.
+    const [avatarId, bannerId] = await Promise.all([
+      salvarImagemSeNova(chamarApi, avatar, perfil.avatarId, 'avatar'),
+      salvarImagemSeNova(chamarApi, banner, perfil.bannerId, 'banner'),
+    ]);
+    const atualizado = await chamarApi('/api/perfil', {
+      method: 'PATCH',
+      body: { ...dados, avatarId, bannerId },
+    });
     setPerfil(atualizado);
     setEditando(false);
     mostrarToast('success', 'Perfil atualizado!');
@@ -223,12 +245,26 @@ export default function PerfilPage() {
     <main className="mx-auto max-w-6xl space-y-8 px-6 py-10">
       {/* Cartão principal: identidade, nível e XP */}
       <section className="relative isolate overflow-hidden rounded-3xl border border-border bg-card p-6 shadow-sm md:p-8">
-        <div aria-hidden="true" className={`absolute inset-x-0 top-0 -z-10 h-28 opacity-90 ${ringFavorito.bg}`} />
-        <div aria-hidden="true" className="absolute inset-x-0 top-0 -z-10 h-28 bg-linear-to-b from-transparent to-card" />
+        {/* Banner: a imagem escolhida ou, sem banner, a cor do anel favorito */}
+        {perfil.bannerId ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={urlImagem(perfil.bannerId)}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-x-0 top-0 -z-10 h-36 w-full object-cover md:h-44"
+          />
+        ) : (
+          <div aria-hidden="true" className={`absolute inset-x-0 top-0 -z-10 h-28 opacity-90 ${ringFavorito.bg}`} />
+        )}
+        <div
+          aria-hidden="true"
+          className={`absolute inset-x-0 top-0 -z-10 bg-linear-to-b from-transparent to-card ${perfil.bannerId ? 'h-36 md:h-44' : 'h-28'}`}
+        />
 
-        <div className="flex flex-col gap-6 pt-10 md:flex-row md:items-end md:justify-between">
+        <div className={`flex flex-col gap-6 md:flex-row md:items-end md:justify-between ${perfil.bannerId ? 'pt-20 md:pt-24' : 'pt-10'}`}>
           <div className="flex flex-col items-center gap-4 text-center md:flex-row md:items-end md:text-left">
-            <Avatar nome={perfil.nome} anel={perfil.anel} tamanho="lg" className="ring-4 ring-card" />
+            <Avatar nome={perfil.nome} anel={perfil.anel} fotoId={perfil.avatarId} tamanho="lg" className="ring-4 ring-card" />
             <div>
               <h1 className="text-3xl font-black tracking-tight text-foreground">{perfil.nome}</h1>
               <div className="mt-2 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm text-foreground-muted md:justify-start">

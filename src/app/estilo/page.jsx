@@ -193,6 +193,40 @@ export default function GuiaDeEstilosPage() {
           </div>
         </div>
       </section>
+
+      {/* Seção 5: Chat e barras de rolagem */}
+      <section className="space-y-4">
+        <h2 className="text-2xl font-bold text-foreground">5. Chat e Barras de Rolagem</h2>
+        <p className="text-sm text-foreground-muted">
+          Tokens <code className="font-mono text-primary-text">--bolha-propria</code>,{' '}
+          <code className="font-mono text-primary-text">--bolha-outra</code> e{' '}
+          <code className="font-mono text-primary-text">--scrollbar</code> em <code className="font-mono">theme.css</code>.
+          A barra de rolagem vale para todas as áreas roláveis da ferramenta.
+        </p>
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div className="rounded-xl border border-border bg-card p-4">
+            <p className="text-xs font-bold text-foreground-muted">Bolha própria</p>
+            <p className="mt-2 inline-block rounded-2xl rounded-br-md bg-bolha-propria px-3.5 py-2 text-sm text-bolha-propria-texto">
+              Minha mensagem
+            </p>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-4">
+            <p className="text-xs font-bold text-foreground-muted">Bolha dos outros</p>
+            <p className="mt-2 inline-block rounded-2xl rounded-bl-md border border-border bg-bolha-outra px-3.5 py-2 text-sm text-bolha-outra-texto">
+              Mensagem recebida
+            </p>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-4">
+            <p className="text-xs font-bold text-foreground-muted">Barra de rolagem</p>
+            <div className="mt-2 h-20 overflow-y-auto rounded-lg border border-border bg-background p-2 text-xs text-foreground-muted">
+              {Array.from({ length: 8 }, (_, i) => (
+                <p key={i}>Linha {i + 1} para rolar</p>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
       </div>
     </main>
   );
