@@ -7,6 +7,7 @@ import Modal from '../../components/Modal';
 import PageHeader from '../../components/PageHeader';
 import CelebracaoAnel from '../../components/CelebracaoAnel';
 import AvisoConquista from '../../components/AvisoConquista';
+import BolhaMensagem from '../../components/BolhaMensagem';
 import { CONQUISTAS } from '../../lib/gamificacao';
 import { RINGS } from '../../lib/rings';
 
@@ -182,6 +183,32 @@ export default function ComponentesPage() {
         >
           Simular conquista
         </Button>
+      </section>
+
+      {/* Teste 6: Bolhas do chat */}
+      <section className="space-y-4 bg-card p-6 rounded-2xl border border-border shadow-sm">
+        <h2 className="text-2xl font-bold text-foreground [overflow-wrap:anywhere]">6. Componente BolhaMensagem (`src/components/BolhaMensagem.jsx`)</h2>
+        <p className="text-sm text-foreground-muted">
+          Mensagens do chat da missão: texto, foto com legenda (largura fixa, estilo WhatsApp), foto sem legenda e mensagem apagada.
+        </p>
+        <div className="rounded-xl border border-border bg-background p-4">
+          <BolhaMensagem
+            mensagem={{ autorNome: 'Ana Silva', autorAnel: 'agua', texto: 'Oi, pessoal! Bora marcar o mutirão para sábado?', criadoEm: '2026-11-05T13:02:00.000Z' }}
+          />
+          <BolhaMensagem
+            agrupada
+            mensagem={{ autorNome: 'Ana Silva', autorAnel: 'agua', imagem: '/ProTer1.png', criadoEm: '2026-11-05T13:03:00.000Z' }}
+          />
+          <BolhaMensagem
+            minha
+            mensagem={{ autorNome: 'Você', autorAnel: 'terra', imagem: '/ProTer2.png', texto: 'Fechado! Levo as luvas e os sacos de lixo.', criadoEm: '2026-11-05T13:05:00.000Z' }}
+          />
+          <BolhaMensagem
+            minha
+            agrupada
+            mensagem={{ autorNome: 'Você', autorAnel: 'terra', apagada: true, criadoEm: '2026-11-05T13:06:00.000Z' }}
+          />
+        </div>
       </section>
 
       {conquistaDemo !== null && (

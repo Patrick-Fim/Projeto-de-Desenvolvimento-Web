@@ -33,6 +33,10 @@ src/
 
 ## 3. Tokens de design (`src/styles/theme.css`)
 
+**Regra de ouro:** todo visual sai daqui (tokens) e de `src/components/` (componentes). Ao criar algo
+novo, primeiro crie o token ou o componente, depois use. Sempre atualize junto `/estilo`, `/componentes`
+e este documento — assim, mudar em um lugar muda a ferramenta inteira.
+
 **Nunca use cores fixas (hex) direto nos componentes.** Use as classes geradas pelos tokens.
 Para criar uma cor nova: declare a variável em `:root` e em `.dark`, e exponha no `@theme inline`
 como `--color-<nome>`. Isso gera `bg-<nome>`, `text-<nome>`, `border-<nome>` etc.
@@ -46,6 +50,12 @@ como `--color-<nome>`. Isso gera `bg-<nome>`, `text-<nome>`, `border-<nome>` etc
 | `--background` / `--card` / `--border` | Fundo da página, cartões, bordas | `bg-background`, `bg-card`, `border-border` |
 | `--danger-text` | Mensagens de erro (AA) | `text-danger-text` |
 | `--ring-earth`, `-fire`, `-wind`, `-water`, `-heart` | Cores dos 5 anéis | `bg-ring-earth`, `text-ring-fire`... |
+| `--bolha-propria` / `--bolha-propria-texto` | Bolha das minhas mensagens no chat | `bg-bolha-propria`, `text-bolha-propria-texto` |
+| `--bolha-outra` / `--bolha-outra-texto` | Bolha das mensagens dos outros | `bg-bolha-outra`, `text-bolha-outra-texto` |
+| `--scrollbar` / `--scrollbar-hover` | Barras de rolagem de toda a ferramenta (aplicadas em `globals.css`) | automático |
+
+`color-scheme` também é definido nos tokens (`light` / `dark`) para que controles nativos do
+navegador sigam o tema.
 
 Opacidade: use o modificador do Tailwind (`bg-primary/10`, `border-accent/30`).
 
@@ -78,6 +88,7 @@ Opacidade: use o modificador do Tailwind (`bg-primary/10`, `border-accent/30`).
 | `CelebracaoAnel` | Animação em tela cheia ao criar missão (partículas próprias de cada anel) | `anel`, `titulo`, `xp`, `onFim` |
 | `AvisoConquista` | Cartão "Conquista desbloqueada!" no canto inferior direito, com confetes (`canvas-confetti`) | `conquista`, `onFechar` |
 | `NotificadorConquistas` | Montado no layout: detecta conquistas novas no perfil e mostra uma de cada vez (lembra as já comemoradas no `localStorage`) | — |
+| `BolhaMensagem` | Uma mensagem do chat (texto, foto com/sem legenda, apagada). Foto tem largura fixa, estilo WhatsApp | `mensagem`, `minha`, `agrupada`, `onAbrirImagem`, `onImagemCarregada`, `acoes` |
 | `ChatMissao` | Chat em tempo real da missão, com envio de imagens | `missaoId`, `podeParticipar`, `usuarioUid`, `chamarApi`, `totalMembros`, `acaoBloqueado` |
 | `ScrollToTop` | Botão "voltar ao topo" | — |
 

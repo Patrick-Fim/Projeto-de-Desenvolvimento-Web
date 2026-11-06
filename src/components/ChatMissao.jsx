@@ -12,13 +12,11 @@ import {
   FaTriangleExclamation,
 } from 'react-icons/fa6';
 import { db } from '../lib/firebase';
-import { getRing } from '../lib/rings';
 import { hoje, diaAnterior } from '../lib/datas';
 import { CHAT } from '../lib/missoes';
-import Avatar from './Avatar';
+import BolhaMensagem from './BolhaMensagem';
 
 const FUSO = 'America/Sao_Paulo';
-const formatoHora = new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: FUSO });
 const formatoData = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'long', timeZone: FUSO });
 const chaveDia = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: FUSO });
 
@@ -289,7 +287,6 @@ export default function ChatMissao({ missaoId, podeParticipar, usuarioUid, chama
               !novoDia &&
               anterior.autorUid === m.autorUid &&
               new Date(m.criadoEm) - new Date(anterior.criadoEm) < CINCO_MINUTOS;
-            const ring = getRing(m.autorAnel);
 
             return (
               <li key={m.id}>
@@ -301,81 +298,36 @@ export default function ChatMissao({ missaoId, podeParticipar, usuarioUid, chama
                   </div>
                 )}
 
-                <div className={`group flex items-end gap-2 ${minha ? 'flex-row-reverse' : ''} ${agrupada ? 'mt-1' : 'mt-3'}`}>
-                  {!minha &&
-                    (agrupada ? (
-                      <span className="w-8 shrink-0" />
-                    ) : (
-                      <Avatar nome={m.autorNome} anel={m.autorAnel} tamanho="sm" />
-                    ))}
-
-                  <div className={`flex max-w-[78%] flex-col ${minha ? 'items-end' : 'items-start'}`}>
-                    {!agrupada && !minha && (
-                      <span className={`mb-1 ml-1 text-xs font-bold ${ring.text}`}>{m.autorNome}</span>
-                    )}
-
-                    <div
-                      className={`rounded-2xl px-3.5 py-2 text-sm shadow-sm ${
-                        minha
-                          ? 'rounded-br-md bg-primary-dark text-white dark:text-slate-950'
-                          : 'rounded-bl-md border border-border bg-background text-foreground'
-                      }`}
-                    >
-                      {m.apagada ? (
-                        <p className="italic opacity-80">Mensagem apagada</p>
+                <BolhaMensagem
+                  mensagem={m}
+                  minha={minha}
+                  agrupada={agrupada}
+                  onAbrirImagem={setImagemAberta}
+                  onImagemCarregada={() => pertoDoFim.current && rolarParaOFim()}
+                  acoes={
+                    minha && !m.apagada ? (
+                      confirmandoApagar === m.id ? (
+                        <span className="flex shrink-0 flex-col gap-1 text-xs">
+                          <button type="button" onClick={() => apagar(m.id)} className="cursor-pointer font-bold text-danger-text hover:underline">
+                            Apagar
+                          </button>
+                          <button type="button" onClick={() => setConfirmandoApagar(null)} className="cursor-pointer text-foreground-muted hover:underline">
+                            Cancelar
+                          </button>
+                        </span>
                       ) : (
-                        <>
-                          {m.imagem && (
-                            <button
-                              type="button"
-                              onClick={() => setImagemAberta(m.imagem)}
-                              aria-label={`Ampliar imagem enviada por ${m.autorNome}`}
-                              className="mb-1 block cursor-zoom-in overflow-hidden rounded-xl"
-                            >
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                src={m.imagem}
-                                alt={`Imagem enviada por ${m.autorNome}`}
-                                onLoad={() => pertoDoFim.current && rolarParaOFim()}
-                                className="max-h-72 w-auto max-w-full object-cover"
-                              />
-                            </button>
-                          )}
-                          {m.texto && <p className="whitespace-pre-wrap break-words">{m.texto}</p>}
-                        </>
-                      )}
-                      <time
-                        dateTime={m.criadoEm}
-                        className={`mt-1 block text-right text-[10px] ${minha ? 'text-white/90 dark:text-slate-950/80' : 'text-foreground-muted'}`}
-                      >
-                        {formatoHora.format(new Date(m.criadoEm))}
-                      </time>
-                    </div>
-                  </div>
-
-                  {/* Apagar a própria mensagem */}
-                  {minha && !m.apagada && (
-                    confirmandoApagar === m.id ? (
-                      <span className="flex shrink-0 flex-col gap-1 text-xs">
-                        <button type="button" onClick={() => apagar(m.id)} className="cursor-pointer font-bold text-danger-text hover:underline">
-                          Apagar
+                        <button
+                          type="button"
+                          onClick={() => setConfirmandoApagar(m.id)}
+                          aria-label="Apagar mensagem"
+                          className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-foreground-muted transition hover:bg-danger-text/10 hover:text-danger-text focus:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+                        >
+                          <FaTrash aria-hidden="true" className="text-xs" />
                         </button>
-                        <button type="button" onClick={() => setConfirmandoApagar(null)} className="cursor-pointer text-foreground-muted hover:underline">
-                          Cancelar
-                        </button>
-                      </span>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setConfirmandoApagar(m.id)}
-                        aria-label="Apagar mensagem"
-                        className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-foreground-muted transition hover:bg-danger-text/10 hover:text-danger-text focus:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
-                      >
-                        <FaTrash aria-hidden="true" className="text-xs" />
-                      </button>
-                    )
-                  )}
-                </div>
+                      )
+                    ) : null
+                  }
+                />
               </li>
             );
           })}
