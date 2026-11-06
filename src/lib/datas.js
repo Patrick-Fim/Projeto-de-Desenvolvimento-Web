@@ -32,3 +32,17 @@ export function sequenciaAtual(perfil) {
   }
   return 0;
 }
+
+// Chave da semana (ISO, começa na segunda) para o ranking semanal. Ex.: "s2026_45".
+export function chaveSemana(dia = hoje()) {
+  const data = new Date(`${dia}T12:00:00Z`);
+  data.setUTCDate(data.getUTCDate() - ((data.getUTCDay() + 6) % 7) + 3); // quinta-feira da semana
+  const ano = data.getUTCFullYear();
+  const quatroDeJaneiro = new Date(Date.UTC(ano, 0, 4, 12));
+  const semana =
+    1 + Math.round(((data - quatroDeJaneiro) / 86400000 - 3 + ((quatroDeJaneiro.getUTCDay() + 6) % 7)) / 7);
+  return `s${ano}_${String(semana).padStart(2, '0')}`;
+}
+
+// Chave do mês para o ranking mensal. Ex.: "m2026_11".
+export const chaveMes = (dia = hoje()) => `m${dia.slice(0, 4)}_${dia.slice(5, 7)}`;

@@ -27,7 +27,7 @@ export default function ScrollToTop() {
       title="Voltar ao topo"
       aria-label="Voltar ao topo"
       tabIndex={visivel ? 0 : -1}
-      className={`fixed bottom-6 right-6 z-40 flex h-12 w-12 cursor-pointer items-center justify-center rounded-full bg-primary-dark text-white shadow-lg shadow-primary/30 transition-all duration-300 hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:text-slate-950 ${
+      className={`fixed bottom-24 right-5 z-40 sm:right-7 flex h-12 w-12 cursor-pointer items-center justify-center rounded-full bg-primary-dark text-white shadow-lg shadow-primary/30 transition-all duration-300 hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:text-slate-950 ${
         visivel
           ? 'pointer-events-auto translate-y-0 opacity-100'
           : 'pointer-events-none translate-y-4 opacity-0'

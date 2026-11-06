@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '../lib/firebaseAuth';
+import { checkin } from '../lib/servicos';
 
 const AuthContext = createContext(null);
 
@@ -14,32 +15,13 @@ export function AuthProvider({ children }) {
   // Nome digitado no cadastro, usado quando o perfil é criado no primeiro acesso.
   const nomePendente = useRef('');
 
-  // Chama a API já enviando o token do usuário logado no cabeçalho.
-  const chamarApi = useCallback(async (caminho, { method = 'GET', body } = {}) => {
-    const headers = {};
-    if (body !== undefined) headers['Content-Type'] = 'application/json';
-    if (auth.currentUser) headers.Authorization = `Bearer ${await auth.currentUser.getIdToken()}`;
-
-    const res = await fetch(caminho, {
-      method,
-      headers,
-      body: body !== undefined ? JSON.stringify(body) : undefined,
-    });
-    const dados = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(dados.message || 'Algo deu errado. Tente novamente.');
-    return dados;
-  }, []);
-
   // Registra o acesso do dia (foguinho) e traz o perfil atualizado.
   const sincronizarPerfil = useCallback(async () => {
-    const dados = await chamarApi('/api/perfil/checkin', {
-      method: 'POST',
-      body: { nome: nomePendente.current },
-    });
+    const dados = await checkin(nomePendente.current);
     nomePendente.current = '';
     setPerfil(dados);
     return dados;
-  }, [chamarApi]);
+  }, []);
 
   useEffect(() => {
     return onAuthStateChanged(auth, async (novoUsuario) => {
@@ -65,7 +47,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ usuario, perfil, setPerfil, carregando, chamarApi, sincronizarPerfil, definirNomePendente, sair }}
+      value={{ usuario, perfil, setPerfil, carregando, sincronizarPerfil, definirNomePendente, sair }}
     >
       {children}
     </AuthContext.Provider>

@@ -9,6 +9,7 @@ import {
   FaFireFlameCurved,
   FaIdCard,
   FaBullhorn,
+  FaCrown,
 } from 'react-icons/fa6';
 
 // Pontos de experiência ganhos em cada ação.
@@ -17,6 +18,7 @@ export const XP = {
   criarMissao: 20,
   engajar: 10,
   concluir: 50,
+  encerrarMissao: 30,
 };
 
 // Níveis do protetor, do iniciante ao lendário.
@@ -100,6 +102,13 @@ export const CONQUISTAS = [
     descricao: 'Concluiu missões dos 5 anéis.',
     Icon: FaStar,
     teste: (p) => (p.aneisConcluidos || []).length >= 5,
+  },
+  {
+    id: 'lider-nato',
+    titulo: 'Líder Nato',
+    descricao: 'Encerrou uma missão como líder.',
+    Icon: FaCrown,
+    teste: (p) => (p.missoesLideradas || 0) >= 1,
   },
   {
     id: 'chama-acesa',

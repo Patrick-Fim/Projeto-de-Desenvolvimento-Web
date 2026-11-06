@@ -43,7 +43,7 @@ export default function AvisoConquista({ conquista, onFechar }) {
       ref={cartaoRef}
       role="status"
       aria-live="polite"
-      className="fixed bottom-24 left-4 right-4 z-[90] animate-conquista sm:bottom-6 sm:left-auto sm:right-6 sm:w-96"
+      className="fixed bottom-24 left-4 right-4 z-[90] animate-conquista sm:bottom-24 sm:left-auto sm:right-6 sm:w-96"
     >
       <div className="relative overflow-hidden rounded-2xl border border-amber-400/50 bg-card p-4 shadow-2xl shadow-amber-500/20">
         <div aria-hidden="true" className="absolute inset-0 bg-linear-to-br from-amber-400/15 via-transparent to-transparent" />

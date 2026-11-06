@@ -30,7 +30,8 @@ import Button from '../../components/Button';
 import Modal from '../../components/Modal';
 import Campo, { classeCampo, a11yCampo } from '../../components/Campo';
 import SeletorImagem from '../../components/SeletorImagem';
-import { urlImagem, salvarImagemSeNova } from '../../lib/imagens';
+import { listarMissoes, editarPerfil, acaoMissao } from '../../lib/servicos';
+import ImagemSalva from '../../components/ImagemSalva';
 
 function CartaoNumero({ Icon, rotulo, valor, detalhe, cor = 'text-primary-text bg-primary/10' }) {
   return (
@@ -53,8 +54,8 @@ function FormEditarPerfil({ perfil, onSalvar, onCancelar }) {
     bio: perfil.bio || '',
     anel: perfil.anel || 'terra',
     // Imagens: URL atual, data URL nova ou null (sem imagem).
-    avatar: urlImagem(perfil.avatarId),
-    banner: urlImagem(perfil.bannerId),
+    avatar: perfil.avatarId || null,
+    banner: perfil.bannerId || null,
   });
   const [erros, setErros] = useState({});
   const [erroApi, setErroApi] = useState('');
@@ -162,7 +163,7 @@ function FormEditarPerfil({ perfil, onSalvar, onCancelar }) {
 
 export default function PerfilPage() {
   const router = useRouter();
-  const { usuario, perfil, setPerfil, carregando, chamarApi, sair } = useAuth();
+  const { usuario, perfil, setPerfil, carregando, sair } = useAuth();
   const [missoes, setMissoes] = useState([]);
   const [editando, setEditando] = useState(false);
   const [concluindo, setConcluindo] = useState('');
@@ -174,8 +175,7 @@ export default function PerfilPage() {
   }, [carregando, usuario, router]);
 
   useEffect(() => {
-    fetch('/api/missoes')
-      .then((res) => (res.ok ? res.json() : []))
+    listarMissoes()
       .then(setMissoes)
       .catch(() => setMissoes([]));
   }, []);
@@ -205,16 +205,9 @@ export default function PerfilPage() {
   const emAndamento = missoes.filter((m) => engajadas.includes(m.id) && !concluidas.includes(m.id));
   const minhasDenuncias = missoes.filter((m) => m.creatorUid === usuario.uid);
 
-  const salvarPerfil = async ({ avatar, banner, ...dados }) => {
-    // Envia primeiro as imagens novas; as que não mudaram mantêm o id atual.
-    const [avatarId, bannerId] = await Promise.all([
-      salvarImagemSeNova(chamarApi, avatar, perfil.avatarId, 'avatar'),
-      salvarImagemSeNova(chamarApi, banner, perfil.bannerId, 'banner'),
-    ]);
-    const atualizado = await chamarApi('/api/perfil', {
-      method: 'PATCH',
-      body: { ...dados, avatarId, bannerId },
-    });
+  const salvarPerfil = async (dados) => {
+    // Envia as imagens novas (as que não mudaram mantêm o id) e salva o perfil.
+    const atualizado = await editarPerfil(dados, perfil);
     setPerfil(atualizado);
     setEditando(false);
     mostrarToast('success', 'Perfil atualizado!');
@@ -224,7 +217,7 @@ export default function PerfilPage() {
     try {
       setConcluindo(missao.id);
       const nivelAntes = nivelDe(perfil.xp).numero;
-      const resposta = await chamarApi(`/api/missoes?id=${missao.id}`, { method: 'PATCH', body: { acao: 'concluir' } });
+      const resposta = await acaoMissao(missao.id, 'concluir');
       setPerfil(resposta.perfil);
       setMissoes((lista) => lista.map((m) => (m.id === missao.id ? resposta.missao : m)));
       const novoNivel = nivelDe(resposta.perfil.xp);
@@ -247,9 +240,8 @@ export default function PerfilPage() {
       <section className="relative isolate overflow-hidden rounded-3xl border border-border bg-card p-6 shadow-sm md:p-8">
         {/* Banner: a imagem escolhida ou, sem banner, a cor do anel favorito */}
         {perfil.bannerId ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={urlImagem(perfil.bannerId)}
+          <ImagemSalva
+            id={perfil.bannerId}
             alt=""
             aria-hidden="true"
             className="absolute inset-x-0 top-0 -z-10 h-36 w-full object-cover md:h-44"
@@ -471,7 +463,7 @@ export default function PerfilPage() {
         <div
           role="status"
           aria-live="polite"
-          className={`fixed bottom-6 left-1/2 z-[60] flex w-[calc(100%-2rem)] max-w-md -translate-x-1/2 items-center gap-3 rounded-2xl px-5 py-4 shadow-2xl animate-fadeIn ${
+          className={`fixed bottom-24 left-1/2 z-[60] flex w-[calc(100%-2rem)] max-w-md -translate-x-1/2 items-center gap-3 rounded-2xl px-5 py-4 shadow-2xl animate-fadeIn ${
             toast.type === 'error' ? 'bg-ring-fire text-white' : 'bg-accent-text text-white dark:text-slate-950'
           }`}
         >

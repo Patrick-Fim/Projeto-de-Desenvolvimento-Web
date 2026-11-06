@@ -13,9 +13,6 @@ export const TAMANHO_MAX_ARQUIVO = 15 * 1024 * 1024;
 // Imagem aceita: data URL em base64 de um formato de imagem comum.
 export const FORMATO_DATA_URL = /^data:image\/(jpeg|png|webp|gif);base64,[A-Za-z0-9+/=]+$/;
 
-// Endereço público de uma imagem salva (servida por /api/imagens/[id]).
-export const urlImagem = (id) => (id ? `/api/imagens/${id}` : null);
-
 // Reduz a imagem ao tamanho do formato (JPEG) para caber no Firestore sem pesar.
 export async function comprimirImagem(arquivo, formato = 'chat') {
   const { largura, altura, limite } = FORMATOS_IMAGEM[formato];
@@ -46,11 +43,3 @@ export async function comprimirImagem(arquivo, formato = 'chat') {
   return resultado;
 }
 
-// Decide o id final de uma imagem num formulário:
-// null = removida · data URL = nova (envia para a API) · URL existente = mantém o id atual.
-export async function salvarImagemSeNova(chamarApi, valor, idAtual, formato) {
-  if (!valor) return null;
-  if (!valor.startsWith('data:')) return idAtual || null;
-  const resposta = await chamarApi('/api/imagens', { method: 'POST', body: { dados: valor, formato } });
-  return resposta.id;
-}

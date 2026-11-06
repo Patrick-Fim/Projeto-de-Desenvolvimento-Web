@@ -75,5 +75,6 @@ export function getRing(id) {
 export const STATUS_STYLES = {
   Ativa: 'border-accent/30 bg-accent/10 text-accent-text',
   Urgente: 'border-danger-text/30 bg-danger-text/10 text-danger-text',
+  'Concluída': 'border-foreground/20 bg-foreground/5 text-foreground-muted',
   'Análise': 'border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300',
 };

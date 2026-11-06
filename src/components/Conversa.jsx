@@ -15,6 +15,8 @@ import { db } from '../lib/firebase';
 import { hoje, diaAnterior } from '../lib/datas';
 import { CHAT } from '../lib/missoes';
 import { comprimirImagem } from '../lib/imagens';
+import { enviarMensagem, apagarMensagem } from '../lib/servicos';
+import { useAuth } from '../context/AuthContext';
 import BolhaMensagem from './BolhaMensagem';
 
 const FUSO = 'America/Sao_Paulo';
@@ -36,17 +38,24 @@ function rotuloDia(iso) {
   return formatoData.format(new Date(iso));
 }
 
-// Conversa em tempo real da missão. Só membros (criador e participantes) leem e escrevem.
-// fotosMembros: { uid: avatarId } para mostrar a foto de perfil atual de cada autor.
-export default function ChatMissao({
-  missaoId,
-  podeParticipar,
+// Conversa em tempo real, reutilizada no chat da missão, do time e nas conversas privadas.
+// caminho: onde ficam as mensagens no Firestore, ex.: ['missoes', id, 'mensagens'].
+// fotosMembros (opcional): { uid: avatarId } para mostrar a foto atual de cada autor.
+export default function Conversa({
+  caminho,
+  podeParticipar = true,
   usuarioUid,
-  chamarApi,
-  totalMembros,
+  titulo = 'Conversa',
+  subtitulo,
+  tituloBloqueado = 'Conversa exclusiva dos participantes',
+  textoBloqueado = 'Entre para ver as mensagens e conversar.',
   acaoBloqueado,
   fotosMembros = {},
+  compacto = false,
 }) {
+  const chaveCaminho = caminho.join('/');
+  const idBase = caminho.join('-');
+  const { perfil } = useAuth();
   const [mensagens, setMensagens] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erroConversa, setErroConversa] = useState('');
@@ -69,7 +78,7 @@ export default function ChatMissao({
   useEffect(() => {
     if (!podeParticipar) return undefined;
     const consulta = query(
-      collection(db, 'missoes', missaoId, 'mensagens'),
+      collection(db, ...chaveCaminho.split('/')),
       orderBy('criadoEm'),
       limitToLast(80)
     );
@@ -85,7 +94,7 @@ export default function ChatMissao({
         setCarregando(false);
       }
     );
-  }, [missaoId, podeParticipar]);
+  }, [chaveCaminho, podeParticipar]);
 
   const rolarParaOFim = () => {
     const lista = listaRef.current;
@@ -146,10 +155,7 @@ export default function ChatMissao({
     try {
       setEnviando(true);
       setErroEnvio('');
-      await chamarApi(`/api/missoes/${missaoId}/mensagens`, {
-        method: 'POST',
-        body: { texto: conteudo, imagem },
-      });
+      await enviarMensagem(caminho, { texto: conteudo, imagem }, perfil);
       setTexto('');
       setImagem(null);
       pertoDoFim.current = true;
@@ -166,7 +172,7 @@ export default function ChatMissao({
 
   const apagar = async (idMensagem) => {
     try {
-      await chamarApi(`/api/missoes/${missaoId}/mensagens?mensagem=${idMensagem}`, { method: 'DELETE' });
+      await apagarMensagem(caminho, idMensagem);
     } catch (err) {
       setErroEnvio(err.message);
     } finally {
@@ -195,9 +201,9 @@ export default function ChatMissao({
         <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-2xl text-primary-text">
           <FaLock aria-hidden="true" />
         </span>
-        <h2 className="mt-4 text-lg font-bold text-foreground">Conversa exclusiva dos participantes</h2>
+        <h2 className="mt-4 text-lg font-bold text-foreground">{tituloBloqueado}</h2>
         <p className="mt-2 max-w-sm text-sm text-foreground-muted">
-          Entre na missão para ver as mensagens, combinar a ação e trocar fotos com os outros protetores.
+          {textoBloqueado}
         </p>
         {acaoBloqueado && <div className="mt-6">{acaoBloqueado}</div>}
       </section>
@@ -206,8 +212,10 @@ export default function ChatMissao({
 
   return (
     <section
-      aria-label="Conversa da missão"
-      className="relative flex h-[70vh] min-h-[480px] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
+      aria-label={titulo}
+      className={`relative flex flex-col overflow-hidden bg-card ${
+        compacto ? 'h-full min-h-0' : 'h-[70vh] min-h-[480px] rounded-2xl border border-border shadow-sm'
+      }`}
       onDragOver={(e) => {
         e.preventDefault();
         setArrastando(true);
@@ -223,9 +231,9 @@ export default function ChatMissao({
           <FaComments aria-hidden="true" />
         </span>
         <div>
-          <h2 className="font-bold text-foreground">Conversa da missão</h2>
+          <h2 className="font-bold text-foreground">{titulo}</h2>
           <p className="text-xs text-foreground-muted">
-            {totalMembros} {totalMembros === 1 ? 'protetor' : 'protetores'} na missão
+            {subtitulo}
           </p>
         </div>
       </div>
@@ -284,7 +292,7 @@ export default function ChatMissao({
 
                 <BolhaMensagem
                   mensagem={m}
-                  fotoId={fotosMembros[m.autorUid]}
+                  fotoId={fotosMembros[m.autorUid] || m.autorAvatarId}
                   minha={minha}
                   agrupada={agrupada}
                   onAbrirImagem={setImagemAberta}
@@ -375,9 +383,9 @@ export default function ChatMissao({
             <FaImage aria-hidden="true" />
           </button>
 
-          <label htmlFor={`mensagem-${missaoId}`} className="sr-only">Mensagem</label>
+          <label htmlFor={`mensagem-${idBase}`} className="sr-only">Mensagem</label>
           <textarea
-            id={`mensagem-${missaoId}`}
+            id={`mensagem-${idBase}`}
             ref={textoRef}
             rows={1}
             value={texto}

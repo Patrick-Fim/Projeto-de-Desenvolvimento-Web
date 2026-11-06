@@ -15,6 +15,8 @@ const NAV_LINKS = [
   { href: '/', label: 'Início' },
   { href: '/missoes', label: 'Missões' },
   { href: '/ranking', label: 'Ranking' },
+  { href: '/time', label: 'Meu Time' },
+  { href: '/amigos', label: 'Amigos' },
 ];
 
 export default function Navbar() {

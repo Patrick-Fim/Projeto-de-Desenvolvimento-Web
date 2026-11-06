@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import {
   FaArrowLeft,
   FaLocationDot,
@@ -17,20 +17,23 @@ import {
   FaCrown,
   FaPenToSquare,
   FaCalendarXmark,
+  FaFlagCheckered as FaBandeira,
 } from 'react-icons/fa6';
-import { useAuth } from '../../../context/AuthContext';
-import { RINGS, getRing, STATUS_STYLES } from '../../../lib/rings';
-import { XP, nivelDe } from '../../../lib/gamificacao';
-import { ehMembro, totalProtetores, infoPrazo, validarCamposMissao } from '../../../lib/missoes';
-import { urlImagem, salvarImagemSeNova } from '../../../lib/imagens';
-import { hoje } from '../../../lib/datas';
-import Button from '../../../components/Button';
-import Avatar from '../../../components/Avatar';
-import Modal from '../../../components/Modal';
-import Campo, { classeCampo, a11yCampo } from '../../../components/Campo';
-import SeletorImagem from '../../../components/SeletorImagem';
-import SeloPrazo from '../../../components/SeloPrazo';
-import ChatMissao from '../../../components/ChatMissao';
+import { useAuth } from '../../context/AuthContext';
+import { RINGS, getRing, STATUS_STYLES } from '../../lib/rings';
+import { XP, nivelDe } from '../../lib/gamificacao';
+import { ehMembro, totalProtetores, validarCamposMissao, aceitaProtetores, missaoConcluida } from '../../lib/missoes';
+import { obterMissao, editarMissao, excluirMissao, acaoMissao, encerrarMissao } from '../../lib/servicos';
+import BotaoAmizade from '../../components/BotaoAmizade';
+import ImagemSalva from '../../components/ImagemSalva';
+import { hoje } from '../../lib/datas';
+import Button from '../../components/Button';
+import Avatar from '../../components/Avatar';
+import Modal from '../../components/Modal';
+import Campo, { classeCampo, a11yCampo } from '../../components/Campo';
+import SeletorImagem from '../../components/SeletorImagem';
+import SeloPrazo from '../../components/SeloPrazo';
+import Conversa from '../../components/Conversa';
 
 // Formulário de edição da missão (só o criador vê). Usa os mesmos campos e regras da criação.
 function FormEditarMissao({ missao, onSalvar, onCancelar }) {
@@ -40,7 +43,7 @@ function FormEditarMissao({ missao, onSalvar, onCancelar }) {
     location: missao.location || '',
     prazo: missao.prazo || '',
     description: missao.description || '',
-    capa: urlImagem(missao.capaId),
+    capa: missao.capaId || null,
   });
   const [erros, setErros] = useState({});
   const [erroApi, setErroApi] = useState('');
@@ -132,9 +135,13 @@ function FormEditarMissao({ missao, onSalvar, onCancelar }) {
 }
 
 export default function MissaoPage() {
-  const { id } = useParams();
+  // O id vem da URL (/missao?id=...), lido no navegador porque o site é estático.
+  const [id, setId] = useState(null);
+  useEffect(() => {
+    setId(new URLSearchParams(window.location.search).get('id') || '');
+  }, []);
   const router = useRouter();
-  const { usuario, perfil, setPerfil, chamarApi } = useAuth();
+  const { usuario, perfil, setPerfil } = useAuth();
 
   const [dados, setDados] = useState(null);
   const [carregando, setCarregando] = useState(true);
@@ -142,6 +149,7 @@ export default function MissaoPage() {
   const [salvando, setSalvando] = useState(false);
   const [confirmandoExclusao, setConfirmandoExclusao] = useState(false);
   const [editando, setEditando] = useState(false);
+  const [confirmandoEncerrar, setConfirmandoEncerrar] = useState(false);
   const [toast, setToast] = useState(null);
 
   const mostrarToast = (type, text) => {
@@ -152,15 +160,14 @@ export default function MissaoPage() {
   // Busca a missão e seus membros na API.
   const carregar = useCallback(async () => {
     try {
-      const res = await fetch(`/api/missoes/${id}`);
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json.message || 'Falha ao carregar a missão.');
-      setDados(json);
+      if (id === null) return;
+      if (!id) throw new Error('Missão não encontrada.');
+      setDados(await obterMissao(id));
       setErro('');
     } catch (err) {
       setErro(err.message);
     } finally {
-      setCarregando(false);
+      if (id !== null) setCarregando(false);
     }
   }, [id]);
 
@@ -173,7 +180,7 @@ export default function MissaoPage() {
     try {
       setSalvando(true);
       const nivelAntes = nivelDe(perfil?.xp).numero;
-      const resposta = await chamarApi(`/api/missoes?id=${id}`, { method: 'PATCH', body: { acao } });
+      const resposta = await acaoMissao(id, acao);
       setPerfil(resposta.perfil);
       await carregar();
 
@@ -192,10 +199,26 @@ export default function MissaoPage() {
     }
   };
 
+  // O líder encerra a missão: ela vai para a lista de concluídas e ele ganha XP.
+  const encerrar = async () => {
+    try {
+      setSalvando(true);
+      const resposta = await encerrarMissao(id, dados.missao);
+      setPerfil(resposta.perfil);
+      await carregar();
+      setConfirmandoEncerrar(false);
+      mostrarToast('success', `Missão encerrada! Ela agora está em Concluídas. +${resposta.xpGanho} XP`);
+    } catch (err) {
+      mostrarToast('error', err.message);
+    } finally {
+      setSalvando(false);
+    }
+  };
+
   const excluir = async () => {
     try {
       setSalvando(true);
-      const resposta = await chamarApi(`/api/missoes?id=${id}`, { method: 'DELETE' });
+      const resposta = await excluirMissao(id, dados.missao);
       if (resposta.perfil) setPerfil(resposta.perfil);
       router.push('/missoes');
     } catch (err) {
@@ -233,16 +256,13 @@ export default function MissaoPage() {
   const ehCriador = usuario?.uid === missao.creatorUid;
   const membro = ehMembro(missao, usuario?.uid);
   const concluiu = (missao.concluidoPor || []).includes(usuario?.uid);
-  const encerrada = infoPrazo(missao.prazo)?.encerrada;
+  const encerrada = !aceitaProtetores(missao);
+  const concluidaPeloLider = missaoConcluida(missao);
   const fotosMembros = Object.fromEntries(membros.map((m) => [m.uid, m.avatarId]));
 
-  // Salva a edição: envia a capa nova (se houver) e os campos pelo PUT.
+  // Salva a edição: envia a capa nova (se houver) e os campos pelo PATCH da API REST.
   const salvarEdicao = async ({ capa, ...campos }) => {
-    const capaId = await salvarImagemSeNova(chamarApi, capa, missao.capaId, 'capa');
-    await chamarApi(`/api/missoes/${id}`, {
-      method: 'PUT',
-      body: { ...campos, prazo: campos.prazo || null, capaId },
-    });
+    await editarMissao(id, { ...campos, capa }, missao);
     await carregar();
     setEditando(false);
     mostrarToast('success', 'Missão atualizada!');
@@ -253,7 +273,7 @@ export default function MissaoPage() {
   if (!usuario) {
     acaoPrincipal = (
       <Link
-        href={`/login?voltar=/missoes/${id}`}
+        href={`/login?voltar=${encodeURIComponent(`/missao?id=${id}`)}`}
         className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-dark px-5 py-2.5 text-sm font-bold text-white hover:brightness-110 dark:text-slate-950"
       >
         <FaRightToBracket aria-hidden="true" /> Entre para participar
@@ -262,7 +282,7 @@ export default function MissaoPage() {
   } else if (!membro && encerrada) {
     acaoPrincipal = (
       <span className="inline-flex items-center gap-2 rounded-xl bg-foreground/5 px-4 py-2.5 text-sm font-bold text-foreground-muted">
-        <FaCalendarXmark aria-hidden="true" /> Prazo encerrado: não aceita novos protetores
+        <FaCalendarXmark aria-hidden="true" /> {concluidaPeloLider ? 'Missão encerrada pelo líder' : 'Prazo encerrado'}: não aceita novos protetores
       </span>
     );
   } else if (!membro) {
@@ -297,8 +317,7 @@ export default function MissaoPage() {
       <section className="relative overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
         {/* Banner da missão (capa) e faixa com a cor do anel */}
         {missao.capaId && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={urlImagem(missao.capaId)} alt="" aria-hidden="true" className="h-48 w-full object-cover md:h-64" />
+          <ImagemSalva id={missao.capaId} aria-hidden="true" className="h-48 w-full object-cover md:h-64" />
         )}
         <span className={`block h-2 w-full ${ring.bg}`} aria-hidden="true" />
         <div className="p-6 md:p-8">
@@ -311,9 +330,23 @@ export default function MissaoPage() {
               <SeloPrazo prazo={missao.prazo} completo />
             </div>
             {ehCriador && (
-              <Button variant="outline" size="sm" onClick={() => setEditando(true)}>
-                <FaPenToSquare aria-hidden="true" /> Editar missão
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                {!concluidaPeloLider &&
+                  (confirmandoEncerrar ? (
+                    <span className="flex flex-wrap items-center gap-2 rounded-xl bg-accent/10 px-3 py-2 text-sm">
+                      <span className="font-semibold text-accent-text">Encerrar e mover para Concluídas?</span>
+                      <Button variant="ecological" size="sm" disabled={salvando} onClick={encerrar}>Sim, encerrar</Button>
+                      <Button variant="ghost" size="sm" onClick={() => setConfirmandoEncerrar(false)}>Cancelar</Button>
+                    </span>
+                  ) : (
+                    <Button variant="ecological" size="sm" onClick={() => setConfirmandoEncerrar(true)}>
+                      <FaBandeira aria-hidden="true" /> Encerrar missão (+{XP.encerrarMissao} XP)
+                    </Button>
+                  ))}
+                <Button variant="outline" size="sm" onClick={() => setEditando(true)}>
+                  <FaPenToSquare aria-hidden="true" /> Editar missão
+                </Button>
+              </div>
             )}
           </div>
 
@@ -353,12 +386,13 @@ export default function MissaoPage() {
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         {/* Chat */}
-        <ChatMissao
-          missaoId={id}
+        <Conversa
+          caminho={['missoes', id, 'mensagens']}
+          titulo="Conversa da missão"
+          textoBloqueado="Entre na missão para ver as mensagens, combinar a ação e trocar fotos com os outros protetores."
           podeParticipar={membro}
           usuarioUid={usuario?.uid}
-          chamarApi={chamarApi}
-          totalMembros={membros.length}
+          subtitulo={`${membros.length} ${membros.length === 1 ? 'protetor' : 'protetores'} na missão`}
           fotosMembros={fotosMembros}
           acaoBloqueado={acaoPrincipal}
         />
@@ -384,10 +418,11 @@ export default function MissaoPage() {
                     <p className="text-xs text-foreground-muted">Nível {nivelDe(m.xp).numero} · {nivelDe(m.xp).nome}</p>
                   </div>
                   {m.papel === 'criador' && (
-                    <span title="Criador da missão" className="flex items-center gap-1 rounded-full bg-amber-400/20 px-2 py-0.5 text-xs font-bold text-amber-800 dark:text-amber-300">
-                      <FaCrown aria-hidden="true" /> Criador
+                    <span title="Líder da missão" className="flex items-center gap-1 rounded-full bg-amber-400/20 px-2 py-0.5 text-xs font-bold text-amber-800 dark:text-amber-300">
+                      <FaCrown aria-hidden="true" /> Líder
                     </span>
                   )}
+                  <BotaoAmizade uid={m.uid} nome={m.nome} compacto />
                 </li>
               ))}
             </ul>
@@ -407,7 +442,7 @@ export default function MissaoPage() {
         <div
           role="status"
           aria-live="polite"
-          className={`fixed bottom-6 left-1/2 z-[60] flex w-[calc(100%-2rem)] max-w-md -translate-x-1/2 items-center gap-3 rounded-2xl px-5 py-4 shadow-2xl animate-fadeIn ${
+          className={`fixed bottom-24 left-1/2 z-[60] flex w-[calc(100%-2rem)] max-w-md -translate-x-1/2 items-center gap-3 rounded-2xl px-5 py-4 shadow-2xl animate-fadeIn ${
             toast.type === 'error' ? 'bg-ring-fire text-white' : 'bg-accent-text text-white dark:text-slate-950'
           }`}
         >
